@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Estadísticas de Compras - Bibliosfera</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .stat-card {
+            transition: transform 0.3s ease;
+            border-radius: 10px;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="bg-gradient-primary text-white p-4 rounded shadow-sm" 
+                     style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h1 class="display-5 fw-bold mb-3">
+                        <i class="bi bi-bar-chart-line me-2"></i>Estadísticas de Compras
+                    </h1>
+                    <p class="lead mb-0 opacity-75">
+                        Análisis detallado de tu actividad de compras y preferencias literarias
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen Estadístico -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card border-primary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-cart-check stat-icon text-primary"></i>
+                        <h2 class="display-6 fw-bold" th:text="${totalCompras != null ? totalCompras : 0}">0</h2>
+                        <p class="text-muted mb-0">Compras Realizadas</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card border-success">
+                    <div class="card-body text-center">
+                        <i class="bi bi-book stat-icon text-success"></i>
+                        <h2 class="display-6 fw-bold" th:text="${totalLibrosComprados != null ? totalLibrosComprados : 0}">0</h2>
+                        <p class="text-muted mb-0">Libros Comprados</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card border-warning">
+                    <div class="card-body text-center">
+                        <i class="bi bi-cash-coin stat-icon text-warning"></i>
+                        <h2 class="display-6 fw-bold" 
+                            th:text="${gastoTotal != null ? 'S/ ' + #numbers.formatDecimal(gastoTotal, 1, 'COMMA', 2, 'POINT') : 'S/ 0.00'}">
+                            S/ 0.00
+                        </h2>
+                        <p class="text-muted mb-0">Gasto Total</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card border-info">
+                    <div class="card-body text-center">
+                        <i class="bi bi-star stat-icon text-info"></i>
+                        <h2 class="display-6 fw-bold" 
+                            th:text="${promedioCompra != null ? 'S/ ' + #numbers.formatDecimal(promedioCompra, 1, 'COMMA', 2, 'POINT') : 'S/ 0.00'}">
+                            S/ 0.00
+                        </h2>
+                        <p class="text-muted mb-0">Promedio por Compra</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos principales -->
+        <div class="row mb-5">
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-bar-chart me-2"></i>Libros por Cantidad (Carrito Actual)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-pie-chart me-2"></i>Distribución del Carrito
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Segundo nivel de gráficos -->
+        <div class="row mb-5">
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up me-2"></i>Precios de los Libros
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="lineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-tags me-2"></i>Categorías Preferidas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de últimos movimientos -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history me-2"></i>Últimas Compras
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" th:if="${ultimasCompras != null and not ultimasCompras.isEmpty()}">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Libros</th>
+                                        <th>Cantidad</th>
+                                        <th>Total</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="compra : ${ultimasCompras}">
+                                        <td th:text="${#temporals.format(compra.fecha, 'dd/MM/yyyy HH:mm')}"></td>
+                                        <td th:text="${compra.libros}"></td>
+                                        <td th:text="${compra.cantidadTotal}"></td>
+                                        <td th:text="'S/ ' + ${#numbers.formatDecimal(compra.total, 1, 'COMMA', 2, 'POINT')}"></td>
+                                        <td>
+                                            <span class="badge bg-success" th:if="${compra.completada}">Completada</span>
+                                            <span class="badge bg-warning" th:unless="${compra.completada}">En proceso</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="text-center py-4" th:if="${ultimasCompras == null or ultimasCompras.isEmpty()}">
+                                <i class="bi bi-info-circle text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="text-muted mt-3">No hay historial de compras</h5>
+                                <p class="text-muted">Realiza tu primera compra para ver estadísticas</p>
+                                <a th:href="@{/catalogo}" class="btn btn-primary">
+                                    <i class="bi bi-book me-2"></i>Explorar Catálogo
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <a th:href="@{/carrito}" class="btn btn-primary me-3">
+                    <i class="bi bi-cart me-2"></i>Ver Carrito Actual
+                </a>
+                <a th:href="@{/catalogo}" class="btn btn-outline-secondary me-3">
+                    <i class="bi bi-book me-2"></i>Seguir Comprando
+                </a>
+                <a th:href="@{/}" class="btn btn-outline-info">
+                    <i class="bi bi-house me-2"></i>Volver al Inicio
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script th:inline="javascript">
+        // Datos del carrito actual (si existe)
+        let librosCarrito = /*[[${carrito}]]*/ [];
+        
+        // Datos para gráficos
+        let nombresLibros = librosCarrito.map(l => l.titulo || l.nombre || 'Libro');
+        let cantidadesLibros = librosCarrito.map(l => l.cantidad || 0);
+        let preciosLibros = librosCarrito.map(l => l.precio || 0);
+        let subtotalesLibros = librosCarrito.map(l => l.subtotal || 0);
+        
+        // Datos de categorías (simulados - deberías obtenerlos del backend)
+        let categorias = ['Ficción', 'Ciencia', 'Historia', 'Fantasia', 'Romance'];
+        let frecuenciaCategorias = [12, 8, 5, 15, 7];
+
+        // Verificar si hay datos para mostrar
+        if (librosCarrito.length > 0) {
+            // Gráfico de barras
+            new Chart(document.getElementById("barChart"), {
+                type: 'bar',
+                data: {
+                    labels: nombresLibros,
+                    datasets: [{
+                        label: "Cantidad",
+                        data: cantidadesLibros,
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Cantidad'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de pastel
+            new Chart(document.getElementById("pieChart"), {
+                type: 'doughnut',
+                data: {
+                    labels: nombresLibros,
+                    datasets: [{
+                        label: "Subtotal",
+                        data: subtotalesLibros,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(153, 102, 255, 0.7)',
+                            'rgba(255, 159, 64, 0.7)',
+                            'rgba(201, 203, 207, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: S/ ${value.toFixed(2)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de líneas
+            new Chart(document.getElementById("lineChart"), {
+                type: 'line',
+                data: {
+                    labels: nombresLibros,
+                    datasets: [{
+                        label: "Precio por Libro",
+                        data: preciosLibros,
+                        borderColor: 'rgba(255, 99, 132, 0.9)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Precio (S/)'
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            // Mostrar mensaje si no hay datos
+            document.getElementById("barChart").parentElement.innerHTML = 
+                '<div class="alert alert-info text-center">No hay libros en el carrito para mostrar estadísticas</div>';
+            document.getElementById("pieChart").parentElement.innerHTML = 
+                '<div class="alert alert-info text-center">Agrega libros al carrito para ver la distribución</div>';
+            document.getElementById("lineChart").parentElement.innerHTML = 
+                '<div class="alert alert-info text-center">Agrega libros al carrito para ver precios</div>';
+        }
+
+        // Gráfico de categorías (siempre visible)
+        new Chart(document.getElementById("categoryChart"), {
+            type: 'polarArea',
+            data: {
+                labels: categorias,
+                datasets: [{
+                    label: "Frecuencia",
+                    data: frecuenciaCategorias,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

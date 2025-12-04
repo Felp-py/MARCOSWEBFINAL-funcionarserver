@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Recomendaciones - Bibliosfera</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container mt-4">
+    <h2 class="text-primary text-center mb-4">📚 Recomendaciones de Libros</h2>
+
+    <form th:action="@{/recomendaciones/agregar}" method="post" th:object="${nuevaRecomendacion}" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <input type="text" th:field="*{titulo}" class="form-control" placeholder="Título" required>
+        </div>
+        <div class="col-md-3">
+            <input type="text" th:field="*{autor}" class="form-control" placeholder="Autor" required>
+        </div>
+        <div class="col-md-3">
+            <input type="text" th:field="*{genero}" class="form-control" placeholder="Género" required>
+        </div>
+        <div class="col-md-3">
+            <input type="text" th:field="*{motivo}" class="form-control" placeholder="Motivo">
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-success w-100">Agregar Recomendación</button>
+        </div>
+    </form>
+
+    <table class="table table-striped text-center align-middle">
+        <thead class="table-primary">
+            <tr>
+                <th>Título</th>
+                <th>Autor</th>
+                <th>Género</th>
+                <th>Motivo</th>
+                <th>Eliminar</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="rec, iter : ${recomendaciones}">
+                <td th:text="${rec.titulo}"></td>
+                <td th:text="${rec.autor}"></td>
+                <td th:text="${rec.genero}"></td>
+                <td th:text="${rec.motivo}"></td>
+                <td>
+                    <a th:href="@{'/recomendaciones/eliminar/' + ${iter.index}}" class="btn btn-danger btn-sm">❌</a>
+                </td>
+            </tr>
+            <tr th:if="${recomendaciones.empty}">
+                <td colspan="5">No hay recomendaciones aún.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <h5 class="text-center">Recomendaciones por Género</h5>
+            <canvas id="barChart"></canvas>
+        </div>
+        <div class="col-md-6">
+            <h5 class="text-center">Distribución de Autores</h5>
+            <canvas id="pieChart"></canvas>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <h5 class="text-center">Tendencia de Recomendaciones</h5>
+            <canvas id="lineChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:inline="javascript">
+    let recomendaciones = /*[[${recomendaciones}]]*/ [];
+
+    let titulos = recomendaciones.map(r => r.titulo);
+    let generos = recomendaciones.map(r => r.genero);
+    let autores = recomendaciones.map(r => r.autor);
+
+    let generoCount = {};
+    generos.forEach(g => generoCount[g] = (generoCount[g] || 0) + 1);
+
+    let autorCount = {};
+    autores.forEach(a => autorCount[a] = (autorCount[a] || 0) + 1);
+
+    new Chart(document.getElementById("barChart"), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(generoCount),
+            datasets: [{
+                label: "Recomendaciones por Género",
+                data: Object.values(generoCount),
+                backgroundColor: 'rgba(54, 162, 235, 0.7)'
+            }]
+        }
+    });
+
+    new Chart(document.getElementById("pieChart"), {
+        type: 'pie',
+        data: {
+            labels: Object.keys(autorCount),
+            datasets: [{
+                data: Object.values(autorCount),
+                backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0']
+            }]
+        }
+    });
+
+    new Chart(document.getElementById("lineChart"), {
+        type: 'line',
+        data: {
+            labels: titulos,
+            datasets: [{
+                label: "Tendencia de Recomendaciones",
+                data: titulos.map((_, i) => i + 1),
+                borderColor: 'rgba(255, 99, 132, 0.9)',
+                fill: false,
+                tension: 0.3
+            }]
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>Administración de Libros - Bibliosfera</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .card-admin {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .card-admin:hover {
+            transform: translateY(-5px);
+        }
+        .admin-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .img-thumbnail-small {
+            width: 60px;
+            height: 80px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <!-- Verificación de rol ADMIN -->
+    <div sec:authorize="hasRole('ADMIN')">
+        
+        <!-- Header de Administración -->
+        <div class="admin-header py-4 mb-4">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="display-5 fw-bold">
+                            <i class="bi bi-gear-fill me-2"></i> Panel de Administración
+                        </h1>
+                        <p class="lead mb-0">Gestión completa del inventario de libros</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a th:href="@{/catalogo}" class="btn btn-light btn-lg">
+                            <i class="bi bi-arrow-left-circle me-2"></i> Volver al Catálogo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container my-5">
+            
+            <!-- Solo botón de añadir libro (sin estadísticas) -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card card-admin">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-primary">
+                                <i class="bi bi-plus-circle-fill me-2"></i>Gestión de Libros
+                            </h5>
+                            <div class="d-flex justify-content-center gap-3">
+                                <a th:href="@{/libros/nuevo}" class="btn btn-success btn-lg">
+                                    <i class="bi bi-plus-lg me-2"></i> Nuevo Libro
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de libros -->
+            <div class="card card-admin">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-book me-2"></i>Lista de Libros en Inventario
+                        <span class="badge bg-primary ms-2" th:text="${libros.size()}">0</span>
+                    </h4>
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Portada</th>
+                                    <th>Título</th>
+                                    <th>Autor</th>
+                                    <th>Categoría</th>
+                                    <th>Editorial</th>
+                                    <th class="text-center">Precio</th>
+                                    <th class="text-center">Stock</th>
+                                    <th class="text-center">Estado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="libro : ${libros}">
+                                    <td th:text="${libro.idLibro}" class="fw-bold">1</td>
+                                    <td>
+                                        <img th:if="${libro.imagenUrl}" 
+                                             th:src="@{${libro.imagenUrl}}" 
+                                             th:alt="${libro.titulo}"
+                                             class="img-thumbnail img-thumbnail-small">
+                                        <div th:unless="${libro.imagenUrl}" 
+                                             class="img-thumbnail-small bg-light d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-image text-muted"></i>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <strong th:text="${libro.titulo}">Título</strong><br>
+                                        <small class="text-muted" 
+                                               th:text="${libro.fechaPublicacion} ? 'Publicado: ' + ${#temporals.format(libro.fechaPublicacion, 'dd/MM/yyyy')} : 'Sin fecha'">
+                                        </small>
+                                    </td>
+                                    <td th:text="${libro.autor != null ? libro.autor.nombre : 'No especificado'}">Autor</td>
+                                    <td th:text="${libro.categoria != null ? libro.categoria.nombre : 'No categoría'}">Categoría</td>
+                                    <td th:text="${libro.editorial != null ? libro.editorial.nombre : 'Sin editorial'}">Editorial</td>
+                                    <td class="text-center fw-bold text-success" 
+                                        th:text="${libro.precio != null ? 'S/ ' + #numbers.formatDecimal(libro.precio, 1, 'COMMA', 2, 'POINT') : 'S/ 0.00'}">
+                                        S/ 0.00
+                                    </td>
+                                    <td class="text-center">
+                                        <span th:class="${libro.stock > 10 ? 'badge bg-success' : 
+                                                          libro.stock > 0 ? 'badge bg-warning' : 'badge bg-danger'}">
+                                            <span th:text="${libro.stock != null ? libro.stock : 0}">0</span> unidades
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span th:if="${libro.stock > 0}" class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> Disponible
+                                        </span>
+                                        <span th:unless="${libro.stock > 0}" class="badge bg-danger">
+                                            <i class="bi bi-x-circle"></i> Agotado
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <!-- Botón Editar -->
+                                            <a th:href="@{'/libros/editar/' + ${libro.idLibro}}" 
+                                               class="btn btn-warning btn-sm me-1"
+                                               title="Editar libro">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            
+                                            <!-- Botón Eliminar -->
+                                            <a th:href="@{'/libros/eliminar/' + ${libro.idLibro}}" 
+                                               class="btn btn-danger btn-sm"
+                                               onclick="return confirmDelete(this);"
+                                               th:attr="data-titulo=${libro.titulo}, data-id=${libro.idLibro}"
+                                               title="Eliminar libro">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                            
+                                            <!-- Botón Ver Detalles -->
+                                            <button class="btn btn-info btn-sm ms-1"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#detalleModal"
+                                                    th:data-id="${libro.idLibro}"
+                                                    th:data-titulo="${libro.titulo}"
+                                                    th:data-autor="${libro.autor != null ? libro.autor.nombre : 'No especificado'}"
+                                                    th:data-categoria="${libro.categoria != null ? libro.categoria.nombre : 'No categoría'}"
+                                                    th:data-editorial="${libro.editorial != null ? libro.editorial.nombre : 'Sin editorial'}"
+                                                    th:data-desc="${libro.descripcion}"
+                                                    th:data-precio="${libro.precio != null ? #numbers.formatDecimal(libro.precio, 1, 'COMMA', 2, 'POINT') : '0.00'}"
+                                                    th:data-stock="${libro.stock}"
+                                                    th:data-fecha="${libro.fechaPublicacion != null ? #temporals.format(libro.fechaPublicacion, 'dd/MM/yyyy') : 'No especificada'}"
+                                                    th:data-imagen="${libro.imagenUrl}"
+                                                    title="Ver detalles">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="card-footer text-muted d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="bi bi-info-circle me-1"></i>
+                        <span th:text="${libros.size()}">0</span> libros registrados
+                    </div>
+                    <a th:href="@{/catalogo}" class="btn btn-outline-primary">
+                        <i class="bi bi-book me-1"></i> Ver Catálogo Público
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Modal para detalles -->
+        <div class="modal fade" id="detalleModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="modalTitulo"></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <img id="modalImagen" src="" class="img-fluid rounded shadow" alt="Portada"
+                                     onerror="this.onerror=null; this.src='https://via.placeholder.com/300x400?text=Sin+imagen';">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <p><strong>Autor:</strong> <span id="modalAutor"></span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Categoría:</strong> <span id="modalCategoria"></span></p>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <p><strong>Editorial:</strong> <span id="modalEditorial"></span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Fecha publicación:</strong> <span id="modalFecha"></span></p>
+                                    </div>
+                                </div>
+                                <p><strong>Descripción:</strong></p>
+                                <p id="modalDescripcion" class="text-muted mb-3"></p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Precio:</strong> <span id="modalPrecio" class="fw-bold text-success"></span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Stock disponible:</strong> <span id="modalStock" class="fw-bold"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Script para el modal de detalles
+        document.addEventListener('DOMContentLoaded', function() {
+            var detalleModal = document.getElementById('detalleModal');
+            
+            if (detalleModal) {
+                detalleModal.addEventListener('show.bs.modal', function(event) {
+                    var button = event.relatedTarget;
+                    
+                    var titulo = button.getAttribute('data-titulo');
+                    var autor = button.getAttribute('data-autor');
+                    var categoria = button.getAttribute('data-categoria');
+                    var editorial = button.getAttribute('data-editorial');
+                    var descripcion = button.getAttribute('data-desc');
+                    var precio = button.getAttribute('data-precio');
+                    var stock = button.getAttribute('data-stock');
+                    var fecha = button.getAttribute('data-fecha');
+                    var imagen = button.getAttribute('data-imagen');
+                    
+                    document.getElementById('modalTitulo').textContent = titulo;
+                    document.getElementById('modalAutor').textContent = autor;
+                    document.getElementById('modalCategoria').textContent = categoria;
+                    document.getElementById('modalEditorial').textContent = editorial;
+                    document.getElementById('modalDescripcion').textContent = descripcion || 'Sin descripción disponible';
+                    document.getElementById('modalPrecio').textContent = 'S/ ' + precio;
+                    document.getElementById('modalFecha').textContent = fecha;
+                    
+                    var stockElement = document.getElementById('modalStock');
+                    stockElement.textContent = stock + ' unidades';
+                    
+                    // Cambiar color del stock según cantidad
+                    stockElement.className = 'fw-bold';
+                    if (stock > 10) {
+                        stockElement.classList.add('text-success');
+                    } else if (stock > 0) {
+                        stockElement.classList.add('text-warning');
+                    } else {
+                        stockElement.classList.add('text-danger');
+                    }
+                    
+                    var imagenElement = document.getElementById('modalImagen');
+                    if (imagen && imagen.trim() !== '') {
+                        imagenElement.src = imagen;
+                    } else {
+                        imagenElement.src = 'https://via.placeholder.com/300x400?text=Sin+imagen';
+                    }
+                });
+            }
+            
+            // Confirmación para eliminar
+            function confirmDelete(button) {
+                var titulo = button.getAttribute('data-titulo');
+                var id = button.getAttribute('data-id');
+                return confirm('¿Está seguro de eliminar el libro:\n\n"' + titulo + '"?\n(ID: ' + id + ')\n\nEsta acción no se puede deshacer.');
+            }
+            
+            // Asignar función a todos los botones eliminar
+            var deleteButtons = document.querySelectorAll('a[onclick*="confirmDelete"]');
+            deleteButtons.forEach(function(button) {
+                button.onclick = function() {
+                    return confirmDelete(this);
+                };
+            });
+        });
+    </script>
+</body>
+</html>

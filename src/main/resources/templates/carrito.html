@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Carrito - Bibliosfera</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .cart-item:hover {
+            background-color: #f8f9fa;
+            transition: background-color 0.3s;
+        }
+        .quantity-control {
+            width: 40px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        .btn-quantity {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="bg-light p-4 rounded shadow-sm">
+                    <h1 class="text-primary mb-2">
+                        <i class="bi bi-cart4 me-2"></i>Tu Carrito
+                    </h1>
+                    <p class="text-muted mb-0">
+                        <span th:text="${carrito != null ? carrito.size() : 0}">0</span> 
+                        artículo(s) en tu carrito
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${param.error != null}" class="alert alert-warning alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <span th:if="${param.error == 'stock_insuficiente'}">
+                Stock insuficiente para agregar la cantidad solicitada.
+            </span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Carrito vacío -->
+        <div th:if="${carrito == null or carrito.empty}" class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-cart-x text-muted" style="font-size: 4rem;"></i>
+            </div>
+            <h3 class="text-muted mb-3">Tu carrito está vacío</h3>
+            <p class="text-muted mb-4">Comienza agregando libros desde nuestro catálogo</p>
+            <a th:href="@{/catalogo}" class="btn btn-primary btn-lg">
+                <i class="bi bi-book me-2"></i>Explorar Catálogo
+            </a>
+        </div>
+
+        <!-- Carrito con items -->
+        <div th:unless="${carrito == null or carrito.empty}" class="row">
+            <!-- Lista de items -->
+            <div class="col-lg-8 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-check me-2"></i>Artículos en el Carrito
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="45%">Libro</th>
+                                        <th class="text-center">Precio</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-center">Subtotal</th>
+                                        <th class="text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="item : ${carrito}" class="cart-item align-middle">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <!-- Imagen del libro (puedes ajustar la ruta) -->
+                                                    <img th:src="@{'/img/libros/' + ${item.idLibro} + '.jpg'}" 
+                                                         th:onerror="this.src='/img/libros/default.jpg'"
+                                                         class="rounded shadow-sm" 
+                                                         width="60" 
+                                                         height="80"
+                                                         style="object-fit: cover;">
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1" th:text="${item.titulo}"></h6>
+                                                    <small class="text-muted">Código: LIB-<span th:text="${item.idLibro}"></span></small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="fw-bold" 
+                                                  th:text="'S/ ' + ${#numbers.formatDecimal(item.precio, 1, 'COMMA', 2, 'POINT')}">
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="d-flex justify-content-center align-items-center">
+                                                <!-- Formulario para disminuir -->
+                                                <form th:action="@{/carrito/actualizar}" method="post" class="d-inline">
+                                                    <input type="hidden" name="idLibro" th:value="${item.idLibro}">
+                                                    <input type="hidden" name="cantidad" th:value="${item.cantidad - 1}">
+                                                    <button type="submit" class="btn btn-outline-secondary btn-quantity" 
+                                                            th:disabled="${item.cantidad <= 1}">
+                                                        <i class="bi bi-dash"></i>
+                                                    </button>
+                                                </form>
+                                                
+                                                <span class="mx-3 fw-bold" th:text="${item.cantidad}"></span>
+                                                
+                                                <!-- Formulario para aumentar -->
+                                                <form th:action="@{/carrito/actualizar}" method="post" class="d-inline">
+                                                    <input type="hidden" name="idLibro" th:value="${item.idLibro}">
+                                                    <input type="hidden" name="cantidad" th:value="${item.cantidad + 1}">
+                                                    <button type="submit" class="btn btn-outline-secondary btn-quantity">
+                                                        <i class="bi bi-plus"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="fw-bold text-success" 
+                                                  th:text="'S/ ' + ${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <form th:action="@{/carrito/eliminar}" method="post" class="d-inline">
+                                                <input type="hidden" name="idLibro" th:value="${item.idLibro}">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                                        title="Eliminar del carrito">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Acciones del carrito -->
+                <div class="d-flex justify-content-between mt-3">
+                    <a th:href="@{/catalogo}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left me-2"></i>Seguir comprando
+                    </a>
+                    <div>
+                        <form th:action="@{/carrito/vaciar}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="bi bi-cart-x me-2"></i>Vaciar carrito
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen del pedido -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-receipt me-2"></i>Resumen de Compra
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Desglose de precios -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Subtotal (<span th:text="${carrito.size()}"></span> items):</span>
+                                <span th:text="'S/ ' + ${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}"></span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Envío:</span>
+                                <span>
+                                    <span th:if="${envio.compareTo(0) == 0}" class="text-success">GRATIS</span>
+                                    <span th:unless="${envio.compareTo(0) == 0}" 
+                                          th:text="'S/ ' + ${#numbers.formatDecimal(envio, 1, 'COMMA', 2, 'POINT')}"></span>
+                                </span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="text-muted">Impuestos (18%):</span>
+                                <span th:text="'S/ ' + ${#numbers.formatDecimal(impuestos, 1, 'COMMA', 2, 'POINT')}"></span>
+                            </div>
+                            
+                            <div th:if="${subtotal.compareTo(minimoEnvioGratis) < 0}" class="alert alert-info py-2">
+                                <small>
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Agrega S/ 
+                                    <span th:text="${#numbers.formatDecimal(minimoEnvioGratis.subtract(subtotal), 1, 'COMMA', 2, 'POINT')}"></span> 
+                                    más para envío gratis
+                                </small>
+                            </div>
+                            
+                            <hr>
+                            <div class="d-flex justify-content-between fs-5 fw-bold">
+                                <span>TOTAL:</span>
+                                <span class="text-success" 
+                                      th:text="'S/ ' + ${#numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}">
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones de acción -->
+                        <div class="d-grid gap-2">
+                            <a th:href="@{/checkout}" class="btn btn-success btn-lg">
+                                <i class="bi bi-credit-card me-2"></i>Proceder al Pago
+                            </a>
+                            <a th:href="@{/compras/estadisticas}" class="btn btn-outline-info">
+                                <i class="bi bi-bar-chart me-2"></i>Ver Estadísticas
+                            </a>
+                        </div>
+                        
+                        <!-- Información adicional -->
+                        <div class="mt-4 pt-3 border-top">
+                            <small class="text-muted d-block mb-2">
+                                <i class="bi bi-shield-check text-success me-1"></i>
+                                Compra 100% segura
+                            </small>
+                            <small class="text-muted d-block mb-2">
+                                <i class="bi bi-arrow-counterclockwise text-warning me-1"></i>
+                                Devolución en 30 días
+                            </small>
+                            <small class="text-muted d-block">
+                                <i class="bi bi-headset text-primary me-1"></i>
+                                Soporte 24/7
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Confirmaciones para acciones destructivas
+        document.addEventListener('DOMContentLoaded', function() {
+            // Confirmar vaciar carrito
+            const vaciarForms = document.querySelectorAll('form[action*="/carrito/vaciar"]');
+            vaciarForms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    if (!confirm('¿Estás seguro de que quieres vaciar todo el carrito?')) {
+                        e.preventDefault();
+                    }
+                });
+            });
+            
+            // Confirmar eliminar item
+            const eliminarForms = document.querySelectorAll('form[action*="/carrito/eliminar"]');
+            eliminarForms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    if (!confirm('¿Eliminar este artículo del carrito?')) {
+                        e.preventDefault();
+                    }
+                });
+            });
+            
+            // Mostrar cantidad al cambiar
+            const quantityButtons = document.querySelectorAll('.btn-quantity');
+            quantityButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const form = this.closest('form');
+                    const cantidadInput = form.querySelector('input[name="cantidad"]');
+                    console.log('Cambiando cantidad a:', cantidadInput.value);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

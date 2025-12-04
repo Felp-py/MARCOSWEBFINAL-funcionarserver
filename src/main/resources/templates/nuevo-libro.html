@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>Nuevo Libro - Administración</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .card-shadow {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body>
+
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <!-- Solo visible para administradores -->
+    <div sec:authorize="hasRole('ADMIN')">
+        <div class="container my-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-md-10">
+                    <div class="card card-shadow p-4">
+                        <div class="card-header bg-primary text-white">
+                            <h2 class="card-title mb-0">
+                                <i class="bi bi-plus-circle-fill me-2"></i> Registrar Nuevo Libro
+                            </h2>
+                        </div>
+                        
+                        <div class="card-body">
+                            <form th:action="@{/libros/guardar}" method="post">
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="titulo" class="form-label fw-bold">Título:</label>
+                                        <input type="text" class="form-control" id="titulo" name="titulo" required
+                                               placeholder="Ingrese el título del libro">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="stock" class="form-label fw-bold">Stock:</label>
+                                        <input type="number" class="form-control" id="stock" name="stock" 
+                                               min="0" value="0" required>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="precio" class="form-label fw-bold">Precio (S/):</label>
+                                        <input type="number" step="0.01" class="form-control" id="precio" 
+                                               name="precio" required placeholder="0.00">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="editorial" class="form-label fw-bold">Editorial:</label>
+                                        <input type="text" class="form-control" id="editorial" name="editorial" 
+                                               required placeholder="Nombre de la editorial">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="autor" class="form-label fw-bold">Autor:</label>
+                                    <input type="text" class="form-control" id="autor" name="autor" required
+                                           placeholder="Nombre completo del autor">
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="categoria" class="form-label fw-bold">Categoría:</label>
+                                    <input type="text" class="form-control" id="categoria" name="categoria" 
+                                           required placeholder="Ej: Novela, Ciencia Ficción, etc.">
+                                </div>
+                                
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <a th:href="@{/admin/lista-libros}" class="btn btn-outline-secondary me-md-2">
+                                        <i class="bi bi-arrow-left me-1"></i> Cancelar
+                                    </a>
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="bi bi-save me-1"></i> Guardar Libro
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div class="card-footer text-muted">
+                            <small><i class="bi bi-info-circle me-1"></i> Todos los campos son obligatorios</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensaje si no es admin -->
+    <div sec:authorize="!hasRole('ADMIN')">
+        <div class="container my-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card border-danger shadow">
+                        <div class="card-body text-center p-5">
+                            <div class="mb-4">
+                                <i class="bi bi-shield-lock text-danger" style="font-size: 4rem;"></i>
+                            </div>
+                            <h2 class="text-danger mb-3">Acceso Restringido</h2>
+                            <p class="lead mb-4">
+                                No tienes permisos para acceder a esta funcionalidad.
+                            </p>
+                            <p class="text-muted mb-4">
+                                Solo los administradores pueden agregar nuevos libros al sistema.
+                            </p>
+                            <div class="d-grid gap-2">
+                                <a th:href="@{/catalogo}" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-book me-2"></i> Ir al Catálogo
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
