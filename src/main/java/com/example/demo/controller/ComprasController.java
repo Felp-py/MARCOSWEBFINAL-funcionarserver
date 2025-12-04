@@ -1,7 +1,6 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.ItemCarrito;
-import com.example.demo.model.Venta;
 import com.example.demo.repository.VentaRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
