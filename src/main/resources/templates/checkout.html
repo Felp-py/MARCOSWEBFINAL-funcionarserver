@@ -27,6 +27,29 @@
             background-color: #e9ecef;
             color: #6c757d;
         }
+        .payment-option {
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .payment-option:hover {
+            border-color: #198754;
+            background-color: #f8f9fa;
+        }
+        .payment-option.selected {
+            border-color: #198754;
+            background-color: #e8f5e9;
+        }
+        .payment-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+        .card-input {
+            letter-spacing: 3px;
+        }
     </style>
 </head>
 <body>
@@ -53,33 +76,52 @@
                         </div>
                         <span class="fw-bold text-success">Checkout</span>
                     </div>
-                    
-                    <div class="mx-3" style="width: 60px; height: 2px; background-color: #e9ecef;"></div>
-                    
-                    <div class="d-flex align-items-center">
-                        <div class="step-indicator step-inactive me-2">
-                            3
-                        </div>
-                        <span class="text-muted">Pago</span>
-                    </div>
                 </div>
             </div>
         </div>
 
+        <!-- Mensajes Flash -->
+        <div th:if="${param.success != null}" class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>
+            <span th:text="${param.success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${param.error != null}" class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <span th:text="${param.error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Mensajes del modelo -->
+        <div th:if="${error != null}" class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
         <div class="row">
-            <!-- Formulario de entrega -->
+            <!-- Formulario de entrega y pago -->
             <div class="col-lg-8 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">
-                            <i class="bi bi-truck me-2"></i>Método de Entrega
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="entregaForm">
+                <form id="checkoutForm" th:action="@{/checkout/procesar}" method="post">
+                    <!-- CSRF Token -->
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    
+                    <!-- Campos ocultos críticos -->
+                    <input type="hidden" id="monedaInput" name="moneda" th:value="${moneda}">
+                    <input type="hidden" id="tipoEntregaHidden" name="tipoEntrega" value="retiro">
+                    
+                    <!-- Método de Entrega -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-truck me-2"></i>Método de Entrega
+                            </h5>
+                        </div>
+                        <div class="card-body">
                             <div class="mb-4">
                                 <div class="form-check mb-3">
-                                    <input class="form-check-input" type="radio" name="tipoEntrega" 
+                                    <input class="form-check-input" type="radio" name="tipoEntregaRadio" 
                                            id="retiroTienda" value="retiro" checked>
                                     <label class="form-check-label" for="retiroTienda">
                                         <h6 class="mb-1">
@@ -94,7 +136,7 @@
                                 </div>
                                 
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="tipoEntrega" 
+                                    <input class="form-check-input" type="radio" name="tipoEntregaRadio" 
                                            id="delivery" value="delivery">
                                     <label class="form-check-label" for="delivery">
                                         <h6 class="mb-1">
@@ -112,31 +154,75 @@
                             <div id="direccionSection" class="d-none">
                                 <h6 class="mb-3">Dirección de Entrega</h6>
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-8 mb-3">
                                         <label for="direccion" class="form-label">Dirección *</label>
                                         <input type="text" class="form-control" id="direccion" 
-                                               placeholder="Av. Principal 123">
+                                               name="direccion" placeholder="Av. Principal 123">
                                     </div>
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <label for="distrito" class="form-label">Distrito *</label>
                                         <input type="text" class="form-control" id="distrito" 
-                                               placeholder="Miraflores">
+                                               name="distrito" placeholder="Miraflores">
                                     </div>
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-8 mb-3">
                                         <label for="ciudad" class="form-label">Ciudad *</label>
                                         <input type="text" class="form-control" id="ciudad" 
-                                               placeholder="Lima" value="Lima">
+                                               name="ciudad" placeholder="Lima" value="Lima">
                                     </div>
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <label for="referencia" class="form-label">Referencia</label>
                                         <input type="text" class="form-control" id="referencia" 
-                                               placeholder="Frente al parque">
+                                               name="referencia" placeholder="Frente al parque">
                                     </div>
                                 </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
-                </div>
+
+                    <!-- Método de Pago -->
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-credit-card me-2"></i>Método de Pago
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Campo oculto para el método de pago (REQUERIDO) -->
+                            <input type="hidden" id="metodoPagoInput" name="metodoPago" required>
+                            
+                            <div class="text-center">
+                                <button type="button" class="btn btn-outline-primary btn-lg" 
+                                        id="seleccionarPagoBtn" data-bs-toggle="modal" data-bs-target="#pagoModal">
+                                    <i class="bi bi-credit-card me-2"></i>Seleccionar Método de Pago
+                                </button>
+                                
+                                <div id="metodoSeleccionado" class="mt-3 d-none">
+                                    <div class="alert alert-success">
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        <span id="metodoTexto"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Términos y condiciones -->
+                            <div class="mt-4 pt-3 border-top">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="terminos" required>
+                                    <label class="form-check-label" for="terminos">
+                                        He leído y acepto los 
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#terminosModal">
+                                            Términos y Condiciones
+                                        </a>
+                                        y la 
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#privacidadModal">
+                                            Política de Privacidad
+                                        </a>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
 
                 <!-- Resumen de productos -->
                 <div class="card shadow-sm mt-4">
@@ -183,7 +269,8 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-2">
                                 <span class="text-muted">Subtotal:</span>
-                                <span id="subtotal" th:text="'S/ ' + ${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}"></span>
+                                <span id="subtotalDisplay" 
+                                      th:text="'S/ ' + ${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}"></span>
                             </div>
                             
                             <div class="d-flex justify-content-between mb-2">
@@ -193,15 +280,15 @@
                             
                             <div class="d-flex justify-content-between mb-3">
                                 <span class="text-muted">Impuestos (18%):</span>
-                                <span id="impuestos" th:text="'S/ ' + ${#numbers.formatDecimal(impuestos, 1, 'COMMA', 2, 'POINT')}"></span>
+                                <span id="impuestosDisplay" 
+                                      th:text="'S/ ' + ${#numbers.formatDecimal(impuestos, 1, 'COMMA', 2, 'POINT')}"></span>
                             </div>
                             
                             <hr>
                             <div class="d-flex justify-content-between fs-5 fw-bold">
                                 <span>TOTAL:</span>
-                                <span id="total" class="text-success" 
-                                      th:text="'S/ ' + ${#numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}">
-                                </span>
+                                <span id="totalDisplay" class="text-success" 
+                                      th:text="'S/ ' + ${#numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}"></span>
                             </div>
                         </div>
 
@@ -213,19 +300,19 @@
                                     <option value="PEN" selected>Soles (S/)</option>
                                     <option value="USD">Dólares (US$)</option>
                                 </select>
-                                <button id="convertirBtn" class="btn btn-outline-secondary ms-2">
+                                <button type="button" id="convertirBtn" class="btn btn-outline-secondary ms-2">
                                     <i class="bi bi-arrow-repeat"></i>
                                 </button>
                             </div>
-                            <div id="tasaCambio" class="mt-2 small text-muted">
+                            <div id="tasaCambioInfo" class="mt-2 small text-muted">
                                 Tasa de cambio: 1 USD = <span id="tasaActual">3.85</span> PEN
                             </div>
                         </div>
 
                         <!-- Botones de acción -->
                         <div class="d-grid gap-2">
-                            <button id="continuarPago" class="btn btn-success btn-lg">
-                                <i class="bi bi-lock me-2"></i>Continuar al Pago
+                            <button type="submit" form="checkoutForm" class="btn btn-success btn-lg" id="procesarPagoBtn" disabled>
+                                <i class="bi bi-lock me-2"></i>Procesar Pago
                             </button>
                             <a th:href="@{/carrito}" class="btn btn-outline-primary">
                                 <i class="bi bi-arrow-left me-2"></i>Volver al Carrito
@@ -253,35 +340,201 @@
         </div>
     </div>
 
+    <!-- Modal Selección de Método de Pago -->
+    <div class="modal fade" id="pagoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Selecciona Método de Pago</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        <button type="button" class="list-group-item list-group-item-action payment-option" 
+                                data-metodo="tarjeta" data-nombre="Tarjeta de Crédito/Débito">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-credit-card-2-front payment-icon text-primary"></i>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">Tarjeta de Crédito/Débito</h6>
+                                    <p class="text-muted mb-0 small">Pago seguro con Visa, Mastercard</p>
+                                </div>
+                            </div>
+                        </button>
+                        
+                        <button type="button" class="list-group-item list-group-item-action payment-option" 
+                                data-metodo="paypal" data-nombre="PayPal">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-paypal payment-icon text-info"></i>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">PayPal</h6>
+                                    <p class="text-muted mb-0 small">Paga con tu cuenta PayPal</p>
+                                </div>
+                            </div>
+                        </button>
+                        
+                        <button type="button" class="list-group-item list-group-item-action payment-option" 
+                                data-metodo="yape" data-nombre="Yape / Plin">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-phone payment-icon text-success"></i>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">Yape / Plin</h6>
+                                    <p class="text-muted mb-0 small">Pago con billetera digital</p>
+                                </div>
+                            </div>
+                        </button>
+                        
+                        <button type="button" class="list-group-item list-group-item-action payment-option" 
+                                data-metodo="efectivo" data-nombre="Efectivo">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-cash payment-icon text-warning"></i>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">Efectivo</h6>
+                                    <p class="text-muted mb-0 small">Paga al recibir (solo delivery)</p>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <!-- Formulario de tarjeta (solo si selecciona tarjeta) -->
+                    <div id="tarjetaForm" class="mt-4 d-none">
+                        <h6>Datos de la Tarjeta</h6>
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="nombreTarjeta" class="form-label">Nombre en la Tarjeta</label>
+                                <input type="text" class="form-control" id="nombreTarjeta" 
+                                       placeholder="JUAN PEREZ">
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label for="numeroTarjeta" class="form-label">Número de Tarjeta</label>
+                                <input type="text" class="form-control card-input" id="numeroTarjeta" 
+                                       placeholder="1234 5678 9012 3456" maxlength="19">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label for="fechaExpiracion" class="form-label">Expira</label>
+                                <input type="text" class="form-control" id="fechaExpiracion" 
+                                       placeholder="MM/AA" maxlength="5">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label for="cvvTarjeta" class="form-label">CVV</label>
+                                <input type="password" class="form-control" id="cvvTarjeta" 
+                                       placeholder="123" maxlength="4">
+                            </div>
+                        </div>
+                        <div class="alert alert-info">
+                            <small>
+                                <i class="bi bi-shield-check me-1"></i>
+                                Tus datos están protegidos con encriptación SSL
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="confirmarMetodoBtn" disabled>
+                        Confirmar Método
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Términos y Condiciones -->
+    <div class="modal fade" id="terminosModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Términos y Condiciones</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Aceptación de los Términos</h6>
+                    <p>Al realizar una compra en Bibliosfera, aceptas los siguientes términos y condiciones...</p>
+                    
+                    <h6>2. Precios y Pagos</h6>
+                    <p>Todos los precios están en soles peruanos (PEN) e incluyen IGV. Ofrecemos conversión a dólares (USD) con tasa de cambio actualizada.</p>
+                    
+                    <h6>3. Envíos y Entregas</h6>
+                    <p>Ofrecemos dos métodos de entrega: retiro en tienda (gratis) o delivery a domicilio (S/ 10.00).</p>
+                    
+                    <h6>4. Métodos de Pago</h6>
+                    <p>Aceptamos tarjetas de crédito/débito, PayPal, Yape/Plin y efectivo al recibir (solo para delivery).</p>
+                    
+                    <h6>5. Devoluciones</h6>
+                    <p>Aceptamos devoluciones dentro de los 30 días posteriores a la compra.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Política de Privacidad -->
+    <div class="modal fade" id="privacidadModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Política de Privacidad</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Información que Recopilamos</h6>
+                    <p>Recopilamos información personal como nombre, dirección, email y datos de pago para procesar tus compras.</p>
+                    
+                    <h6>2. Uso de la Información</h6>
+                    <p>Utilizamos tu información para procesar pedidos, enviar actualizaciones y mejorar nuestros servicios.</p>
+                    
+                    <h6>3. Protección de Datos</h6>
+                    <p>Implementamos medidas de seguridad para proteger tus datos personales contra acceso no autorizado.</p>
+                    
+                    <h6>4. Tus Derechos</h6>
+                    <p>Tienes derecho a acceder, corregir o eliminar tu información personal en cualquier momento.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div th:replace="~{fragments/footer :: footer}"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Variables globales
-        let subtotalBase = parseFloat(document.getElementById('subtotal').textContent.replace('S/ ', ''));
-        let impuestosBase = parseFloat(document.getElementById('impuestos').textContent.replace('S/ ', ''));
-        let totalBase = parseFloat(document.getElementById('total').textContent.replace('S/ ', ''));
-        let tasaCambioActual = 3.85; // Valor inicial
-        let monedaActual = 'PEN';
+        let subtotalBase = parseFloat(document.getElementById('subtotalDisplay').textContent.replace('S/ ', ''));
+        let impuestosBase = parseFloat(document.getElementById('impuestosDisplay').textContent.replace('S/ ', ''));
+        let totalBase = parseFloat(document.getElementById('totalDisplay').textContent.replace('S/ ', ''));
+        let tasaCambioActual = 3.85;
+        let monedaActual = document.getElementById('monedaSelector').value;
         let costoEnvio = 0;
+        let metodoPagoSeleccionado = null;
+        
+        // Inicializar campo moneda
+        document.getElementById('monedaInput').value = monedaActual;
 
-        // API de tipo de cambio gratuita (ExchangeRate-API)
-        const API_KEY = 'tu_api_key_gratuita'; // Obtén una en https://www.exchangerate-api.com/
-        const API_URL = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/PEN`;
-
-        // Alternativa gratuita sin API_KEY (menos precisa)
-        // const API_URL = 'https://api.exchangerate-api.com/v4/latest/PEN';
+        // API de tipo de cambio (fallback si falla)
+        const API_URL = 'https://api.exchangerate-api.com/v4/latest/PEN';
 
         // Toggle dirección de entrega
-        document.querySelectorAll('input[name="tipoEntrega"]').forEach(radio => {
+        document.querySelectorAll('input[name="tipoEntregaRadio"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const direccionSection = document.getElementById('direccionSection');
+                const tipoEntregaHidden = document.getElementById('tipoEntregaHidden');
+                
                 if (this.value === 'delivery') {
                     direccionSection.classList.remove('d-none');
                     costoEnvio = 10.00;
+                    tipoEntregaHidden.value = 'delivery';
+                    
+                    // Si es efectivo y delivery, mostrar mensaje
+                    if (metodoPagoSeleccionado === 'efectivo') {
+                        document.getElementById('metodoTexto').textContent = 'Efectivo (al recibir)';
+                    }
                 } else {
                     direccionSection.classList.add('d-none');
                     costoEnvio = 0;
+                    tipoEntregaHidden.value = 'retiro';
+                    
+                    // Efectivo no disponible para retiro
+                    if (metodoPagoSeleccionado === 'efectivo') {
+                        resetMetodoPago();
+                        alert('El pago en efectivo solo está disponible para delivery. Por favor selecciona otro método.');
+                    }
                 }
                 actualizarTotales();
             });
@@ -289,116 +542,348 @@
 
         // Función para actualizar totales
         function actualizarTotales() {
-            let nuevoTotal = subtotalBase + costoEnvio + impuestosBase;
+            let subtotal = subtotalBase;
+            let impuestos = impuestosBase;
+            let envio = costoEnvio;
+            let total = subtotal + envio + impuestos;
             
             // Convertir si está en dólares
             if (monedaActual === 'USD') {
-                nuevoTotal = nuevoTotal / tasaCambioActual;
+                subtotal = subtotal / tasaCambioActual;
+                impuestos = impuestos / tasaCambioActual;
+                envio = envio / tasaCambioActual;
+                total = total / tasaCambioActual;
             }
             
             // Actualizar displays
             const envioDisplay = document.getElementById('envioDisplay');
-            const totalDisplay = document.getElementById('total');
+            const subtotalDisplay = document.getElementById('subtotalDisplay');
+            const impuestosDisplay = document.getElementById('impuestosDisplay');
+            const totalDisplay = document.getElementById('totalDisplay');
             
             if (costoEnvio === 0) {
                 envioDisplay.textContent = 'GRATIS';
             } else {
                 envioDisplay.textContent = monedaActual === 'PEN' 
-                    ? `S/ ${costoEnvio.toFixed(2)}`
-                    : `US$ ${(costoEnvio / tasaCambioActual).toFixed(2)}`;
+                    ? `S/ ${envio.toFixed(2)}`
+                    : `US$ ${envio.toFixed(2)}`;
             }
             
+            subtotalDisplay.textContent = monedaActual === 'PEN'
+                ? `S/ ${subtotal.toFixed(2)}`
+                : `US$ ${subtotal.toFixed(2)}`;
+                
+            impuestosDisplay.textContent = monedaActual === 'PEN'
+                ? `S/ ${impuestos.toFixed(2)}`
+                : `US$ ${impuestos.toFixed(2)}`;
+                
             totalDisplay.textContent = monedaActual === 'PEN'
-                ? `S/ ${nuevoTotal.toFixed(2)}`
-                : `US$ ${nuevoTotal.toFixed(2)}`;
+                ? `S/ ${total.toFixed(2)}`
+                : `US$ ${total.toFixed(2)}`;
         }
 
         // Obtener tasa de cambio
         async function obtenerTasaCambio() {
             try {
                 const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('Error en la respuesta');
+                
                 const data = await response.json();
                 
-                if (data && data.conversion_rates && data.conversion_rates.USD) {
-                    tasaCambioActual = data.conversion_rates.USD;
+                if (data && data.rates && data.rates.USD) {
+                    tasaCambioActual = data.rates.USD;
                     document.getElementById('tasaActual').textContent = tasaCambioActual.toFixed(3);
                     
-                    // Si ya está en USD, actualizar totales
+                    // Actualizar totales si ya está en USD
                     if (monedaActual === 'USD') {
                         actualizarTotales();
                     }
+                    
+                    return true;
                 }
             } catch (error) {
-                console.error('Error obteniendo tasa de cambio:', error);
+                console.warn('No se pudo obtener tasa de cambio en tiempo real:', error);
                 // Usar tasa por defecto
                 tasaCambioActual = 3.85;
                 document.getElementById('tasaActual').textContent = '3.850 (estimado)';
             }
+            return false;
         }
 
         // Cambiar moneda
         document.getElementById('monedaSelector').addEventListener('change', function() {
             monedaActual = this.value;
+            document.getElementById('monedaInput').value = monedaActual;
             actualizarTotales();
-            
-            // Actualizar símbolos en la página
-            document.querySelectorAll('[id^="subtotal"], [id^="impuestos"]').forEach(el => {
-                if (el.id !== 'subtotal' && el.id !== 'impuestos') return;
-                let currentText = el.textContent;
-                if (monedaActual === 'USD') {
-                    el.textContent = currentText.replace('S/ ', 'US$ ');
-                } else {
-                    el.textContent = currentText.replace('US$ ', 'S/ ');
-                }
-            });
         });
 
-        // Botón para convertir
-        document.getElementById('convertirBtn').addEventListener('click', function() {
-            obtenerTasaCambio();
-            this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+        // Botón para actualizar tasa de cambio
+        document.getElementById('convertirBtn').addEventListener('click', async function() {
+            const btn = this;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+            btn.disabled = true;
+            
+            await obtenerTasaCambio();
+            
             setTimeout(() => {
-                this.innerHTML = '<i class="bi bi-arrow-repeat"></i>';
+                btn.innerHTML = '<i class="bi bi-arrow-repeat"></i>';
+                btn.disabled = false;
             }, 1000);
         });
 
-        // Continuar al pago
-        document.getElementById('continuarPago').addEventListener('click', function() {
-            const tipoEntrega = document.querySelector('input[name="tipoEntrega"]:checked').value;
+        // Selección de método de pago en modal
+        document.querySelectorAll('.payment-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // Resetear selección
+                document.querySelectorAll('.payment-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                // Seleccionar esta opción
+                this.classList.add('selected');
+                
+                const metodo = this.getAttribute('data-metodo');
+                const nombre = this.getAttribute('data-nombre');
+                
+                // Mostrar/ocultar formulario de tarjeta
+                const tarjetaForm = document.getElementById('tarjetaForm');
+                if (metodo === 'tarjeta') {
+                    tarjetaForm.classList.remove('d-none');
+                    document.getElementById('confirmarMetodoBtn').disabled = true;
+                } else {
+                    tarjetaForm.classList.add('d-none');
+                    document.getElementById('confirmarMetodoBtn').disabled = false;
+                }
+                
+                // Validar efectivo solo para delivery
+                if (metodo === 'efectivo') {
+                    const tipoEntrega = document.querySelector('input[name="tipoEntregaRadio"]:checked').value;
+                    if (tipoEntrega === 'retiro') {
+                        alert('El pago en efectivo solo está disponible para delivery');
+                        this.classList.remove('selected');
+                        tarjetaForm.classList.add('d-none');
+                        document.getElementById('confirmarMetodoBtn').disabled = true;
+                        return;
+                    }
+                }
+                
+                // Guardar selección temporal
+                metodoPagoSeleccionado = metodo;
+            });
+        });
+
+        // Confirmar método de pago
+        document.getElementById('confirmarMetodoBtn').addEventListener('click', function() {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('pagoModal'));
+            const selectedOption = document.querySelector('.payment-option.selected');
+            
+            if (!selectedOption) {
+                alert('Por favor selecciona un método de pago');
+                return;
+            }
+            
+            const metodo = selectedOption.getAttribute('data-metodo');
+            const nombre = selectedOption.getAttribute('data-nombre');
+            
+            // Validar datos de tarjeta si aplica
+            if (metodo === 'tarjeta') {
+                const nombreTarjeta = document.getElementById('nombreTarjeta').value;
+                const numeroTarjeta = document.getElementById('numeroTarjeta').value;
+                const fechaExpiracion = document.getElementById('fechaExpiracion').value;
+                const cvv = document.getElementById('cvvTarjeta').value;
+                
+                if (!nombreTarjeta || !numeroTarjeta || !fechaExpiracion || !cvv) {
+                    alert('Por favor completa todos los datos de la tarjeta');
+                    return;
+                }
+                
+                if (numeroTarjeta.replace(/\s/g, '').length < 16) {
+                    alert('El número de tarjeta debe tener al menos 16 dígitos');
+                    return;
+                }
+                
+                // Validar fecha MM/AA
+                const [mes, ano] = fechaExpiracion.split('/');
+                if (!mes || !ano || mes.length !== 2 || ano.length !== 2) {
+                    alert('Formato de fecha inválido. Usa MM/AA');
+                    return;
+                }
+                
+                // Validar CVV
+                if (cvv.length < 3 || cvv.length > 4) {
+                    alert('El CVV debe tener 3 o 4 dígitos');
+                    return;
+                }
+            }
+            
+            // Actualizar UI
+            document.getElementById('metodoPagoInput').value = metodo;
+            document.getElementById('metodoSeleccionado').classList.remove('d-none');
+            document.getElementById('metodoTexto').textContent = nombre;
+            document.getElementById('seleccionarPagoBtn').classList.add('d-none');
+            
+            // Cerrar modal
+            modal.hide();
+            
+            // Actualizar botón de procesar
+            actualizarBotonProcesar();
+            
+            // Limpiar formulario de tarjeta si existe
+            if (document.getElementById('nombreTarjeta')) {
+                document.getElementById('nombreTarjeta').value = '';
+                document.getElementById('numeroTarjeta').value = '';
+                document.getElementById('fechaExpiracion').value = '';
+                document.getElementById('cvvTarjeta').value = '';
+            }
+        });
+
+        // Resetear método de pago
+        function resetMetodoPago() {
+            metodoPagoSeleccionado = null;
+            document.getElementById('metodoPagoInput').value = '';
+            document.getElementById('metodoSeleccionado').classList.add('d-none');
+            document.getElementById('seleccionarPagoBtn').classList.remove('d-none');
+            document.querySelectorAll('.payment-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            actualizarBotonProcesar();
+        }
+
+        // Actualizar botón de procesar pago
+        function actualizarBotonProcesar() {
+            const btn = document.getElementById('procesarPagoBtn');
+            const terminos = document.getElementById('terminos');
+            const metodo = document.getElementById('metodoPagoInput').value;
+            
+            if (metodo && terminos && terminos.checked) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-lock me-2"></i>Procesar Pago';
+            } else {
+                btn.disabled = true;
+                if (!metodo) {
+                    btn.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Selecciona método de pago';
+                } else if (!terminos.checked) {
+                    btn.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Acepta los términos';
+                }
+            }
+        }
+
+        // Validar términos
+        document.getElementById('terminos').addEventListener('change', actualizarBotonProcesar);
+
+        // Formatear número de tarjeta
+        document.getElementById('numeroTarjeta')?.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            let formatted = value.match(/.{1,4}/g)?.join(' ') || value;
+            e.target.value = formatted;
+            validarFormularioTarjeta();
+        });
+
+        // Formatear fecha de expiración
+        document.getElementById('fechaExpiracion')?.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value;
+            validarFormularioTarjeta();
+        });
+
+        // Validar formulario de tarjeta
+        function validarFormularioTarjeta() {
+            const nombre = document.getElementById('nombreTarjeta')?.value || '';
+            const numero = document.getElementById('numeroTarjeta')?.value || '';
+            const fecha = document.getElementById('fechaExpiracion')?.value || '';
+            const cvv = document.getElementById('cvvTarjeta')?.value || '';
+            
+            const btn = document.getElementById('confirmarMetodoBtn');
+            const isValid = nombre.trim().length > 0 && 
+                          numero.replace(/\s/g, '').length >= 16 && 
+                          fecha.length === 5 && 
+                          (cvv.length === 3 || cvv.length === 4);
+            
+            btn.disabled = !isValid;
+        }
+
+        // Validar CVV
+        document.getElementById('cvvTarjeta')?.addEventListener('input', function(e) {
+            this.value = this.value.replace(/\D/g, '');
+            validarFormularioTarjeta();
+        });
+
+        // Validar nombre tarjeta
+        document.getElementById('nombreTarjeta')?.addEventListener('input', validarFormularioTarjeta);
+
+        // Procesar pago al enviar formulario
+        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+            const tipoEntrega = document.getElementById('tipoEntregaHidden').value;
             
             // Validar dirección si es delivery
             if (tipoEntrega === 'delivery') {
                 const direccion = document.getElementById('direccion').value;
                 const distrito = document.getElementById('distrito').value;
-                const ciudad = document.getElementById('ciudad').value;
                 
-                if (!direccion.trim() || !distrito.trim() || !ciudad.trim()) {
+                if (!direccion.trim() || !distrito.trim()) {
+                    e.preventDefault();
                     alert('Por favor completa todos los campos de dirección para delivery');
-                    return;
+                    return false;
                 }
             }
             
-            // Preparar datos para enviar
-            const datosCheckout = {
-                tipoEntrega: tipoEntrega,
-                costoEnvio: costoEnvio,
-                moneda: monedaActual,
-                tasaCambio: tasaCambioActual,
-                total: document.getElementById('total').textContent,
-                // Aquí agregarías más datos según necesites
-            };
+            // Validar método de pago
+            const metodo = document.getElementById('metodoPagoInput').value;
+            if (!metodo) {
+                e.preventDefault();
+                alert('Por favor selecciona un método de pago');
+                return false;
+            }
             
-            // Guardar en localStorage para la siguiente página
-            localStorage.setItem('checkoutData', JSON.stringify(datosCheckout));
+            // Validar términos
+            if (!document.getElementById('terminos').checked) {
+                e.preventDefault();
+                alert('Debes aceptar los términos y condiciones');
+                return false;
+            }
             
-            // Redirigir a página de pago
-            alert('Redirigiendo a la página de pago...');
-            // window.location.href = '/pago'; // Descomenta cuando tengas la página de pago
+            // Mostrar loader
+            const btn = document.getElementById('procesarPagoBtn');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Procesando...';
+            btn.disabled = true;
+            
+            return true;
         });
 
         // Inicializar
         document.addEventListener('DOMContentLoaded', function() {
+            // Obtener tasa de cambio inicial
             obtenerTasaCambio();
+            
+            // Configurar tipo de entrega por defecto
+            const tipoEntregaRadio = document.querySelector('input[name="tipoEntregaRadio"]:checked');
+            if (tipoEntregaRadio) {
+                document.getElementById('tipoEntregaHidden').value = tipoEntregaRadio.value;
+                if (tipoEntregaRadio.value === 'delivery') {
+                    costoEnvio = 10.00;
+                    document.getElementById('direccionSection').classList.remove('d-none');
+                    actualizarTotales();
+                }
+            }
+            
+            // Configurar botón inicial
+            actualizarBotonProcesar();
+            
+            // Configurar cerrar modal al hacer click fuera
+            const pagoModal = document.getElementById('pagoModal');
+            pagoModal.addEventListener('hidden.bs.modal', function() {
+                // Si no se confirmó método, resetear selección
+                if (!document.getElementById('metodoPagoInput').value) {
+                    document.querySelectorAll('.payment-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    document.getElementById('tarjetaForm').classList.add('d-none');
+                    document.getElementById('confirmarMetodoBtn').disabled = true;
+                }
+            });
         });
     </script>
 </body>
