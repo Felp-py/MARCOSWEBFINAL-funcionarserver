@@ -23,6 +23,39 @@
             align-items: center;
             justify-content: center;
         }
+        .summary-table {
+            width: 100%;
+        }
+        .summary-table td {
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .summary-table tr:last-child td {
+            border-bottom: none;
+            border-top: 2px solid #dee2e6;
+            padding-top: 12px;
+        }
+        .currency-table {
+            width: 100%;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .currency-table td {
+            padding: 10px 15px;
+        }
+        .payment-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .libro-imagen {
+            width: 60px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -51,6 +84,9 @@
             <span th:if="${param.error == 'stock_insuficiente'}">
                 Stock insuficiente para agregar la cantidad solicitada.
             </span>
+            <span th:if="${param.error == 'carrito_vacio'}">
+                Tu carrito está vacío. Agrega productos para continuar.
+            </span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
@@ -70,7 +106,8 @@
         <div th:unless="${carrito == null or carrito.empty}" class="row">
             <!-- Lista de items -->
             <div class="col-lg-8 mb-4">
-                <div class="card shadow-sm">
+                <!-- Artículos en el Carrito -->
+                <div class="card shadow-sm mb-4">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">
                             <i class="bi bi-list-check me-2"></i>Artículos en el Carrito
@@ -93,13 +130,16 @@
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <div class="flex-shrink-0 me-3">
-                                                    <!-- Imagen del libro (puedes ajustar la ruta) -->
-                                                    <img th:src="@{'/img/libros/' + ${item.idLibro} + '.jpg'}" 
+                                                    <!-- CORREGIDO: Usar imagenUrl del ItemCarrito -->
+                                                    <img th:if="${item.imagenUrl != null}" 
+                                                         th:src="@{${item.imagenUrl}}" 
+                                                         class="libro-imagen rounded shadow-sm"
+                                                         alt="Portada del libro">
+                                                    <img th:unless="${item.imagenUrl != null}"
+                                                         th:src="@{'/img/libros/' + ${item.idLibro} + '.jpg'}" 
                                                          th:onerror="this.src='/img/libros/default.jpg'"
-                                                         class="rounded shadow-sm" 
-                                                         width="60" 
-                                                         height="80"
-                                                         style="object-fit: cover;">
+                                                         class="libro-imagen rounded shadow-sm"
+                                                         alt="Portada del libro">
                                                 </div>
                                                 <div class="flex-grow-1">
                                                     <h6 class="mb-1" th:text="${item.titulo}"></h6>
@@ -114,7 +154,6 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="d-flex justify-content-center align-items-center">
-                                                <!-- Formulario para disminuir -->
                                                 <form th:action="@{/carrito/actualizar}" method="post" class="d-inline">
                                                     <input type="hidden" name="idLibro" th:value="${item.idLibro}">
                                                     <input type="hidden" name="cantidad" th:value="${item.cantidad - 1}">
@@ -126,7 +165,6 @@
                                                 
                                                 <span class="mx-3 fw-bold" th:text="${item.cantidad}"></span>
                                                 
-                                                <!-- Formulario para aumentar -->
                                                 <form th:action="@{/carrito/actualizar}" method="post" class="d-inline">
                                                     <input type="hidden" name="idLibro" th:value="${item.idLibro}">
                                                     <input type="hidden" name="cantidad" th:value="${item.cantidad + 1}">
@@ -138,7 +176,7 @@
                                         </td>
                                         <td class="text-center">
                                             <span class="fw-bold text-success" 
-                                                  th:text="'S/ ' + ${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">
+                                                  th:text="'S/ ' + ${#numbers.formatDecimal(item.getSubtotal(), 1, 'COMMA', 2, 'POINT')}">
                                             </span>
                                         </td>
                                         <td class="text-center">
@@ -158,7 +196,7 @@
                 </div>
                 
                 <!-- Acciones del carrito -->
-                <div class="d-flex justify-content-between mt-3">
+                <div class="d-flex justify-content-between">
                     <a th:href="@{/catalogo}" class="btn btn-outline-primary">
                         <i class="bi bi-arrow-left me-2"></i>Seguir comprando
                     </a>
@@ -172,78 +210,87 @@
                 </div>
             </div>
 
-            <!-- Resumen del pedido -->
+            <!-- Resumen del pedido (LATERAL) -->
             <div class="col-lg-4">
                 <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
                     <div class="card-header bg-success text-white">
                         <h5 class="mb-0">
-                            <i class="bi bi-receipt me-2"></i>Resumen de Compra
+                            <i class="bi bi-receipt me-2"></i>Resumen del Pedido
                         </h5>
                     </div>
                     <div class="card-body">
-                        <!-- Desglose de precios -->
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Subtotal (<span th:text="${carrito.size()}"></span> items):</span>
-                                <span th:text="'S/ ' + ${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}"></span>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Envío:</span>
-                                <span>
-                                    <span th:if="${envio.compareTo(0) == 0}" class="text-success">GRATIS</span>
-                                    <span th:unless="${envio.compareTo(0) == 0}" 
-                                          th:text="'S/ ' + ${#numbers.formatDecimal(envio, 1, 'COMMA', 2, 'POINT')}"></span>
-                                </span>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between mb-3">
-                                <span class="text-muted">Impuestos (18%):</span>
-                                <span th:text="'S/ ' + ${#numbers.formatDecimal(impuestos, 1, 'COMMA', 2, 'POINT')}"></span>
-                            </div>
-                            
-                            <div th:if="${subtotal.compareTo(minimoEnvioGratis) < 0}" class="alert alert-info py-2">
-                                <small>
-                                    <i class="bi bi-info-circle me-1"></i>
-                                    Agrega S/ 
-                                    <span th:text="${#numbers.formatDecimal(minimoEnvioGratis.subtract(subtotal), 1, 'COMMA', 2, 'POINT')}"></span> 
-                                    más para envío gratis
-                                </small>
-                            </div>
-                            
-                            <hr>
-                            <div class="d-flex justify-content-between fs-5 fw-bold">
-                                <span>TOTAL:</span>
-                                <span class="text-success" 
-                                      th:text="'S/ ' + ${#numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}">
-                                </span>
+                        <!-- Tabla de resumen -->
+                        <table class="summary-table mb-4">
+                            <tr>
+                                <td>Subtotal:</td>
+                                <td class="text-end">S/ <span th:text="${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Envío:</td>
+                                <td class="text-end">
+                                    <!-- CORREGIDO: Verificar si envio es nulo -->
+                                    <span th:if="${envio != null and envio.compareTo(0) == 0}" class="text-success fw-bold">GRATIS</span>
+                                    <span th:if="${envio != null and envio.compareTo(0) > 0}" class="text-end">
+                                        S/ <span th:text="${#numbers.formatDecimal(envio, 1, 'COMMA', 2, 'POINT')}"></span>
+                                    </span>
+                                    <span th:if="${envio == null}" class="text-success fw-bold">GRATIS</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Impuestos (18%):</td>
+                                <td class="text-end">S/ <span th:text="${#numbers.formatDecimal(impuestos, 1, 'COMMA', 2, 'POINT')}"></span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>TOTAL:</strong></td>
+                                <td class="text-end"><strong>S/ <span th:text="${#numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}"></span></strong></td>
+                            </tr>
+                        </table>
+
+                        <!-- Moneda de Pago -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-2">Moneda de Pago</h6>
+                            <table class="currency-table">
+                                <tr>
+                                    <td>Soles (S/)</td>
+                                    <td class="text-end">✔️</td>
+                                </tr>
+                            </table>
+                            <small class="text-muted mt-1 d-block">
+                                Tasa de cambio: 1 USD = <span th:text="${tipoCambio != null ? #numbers.formatDecimal(tipoCambio, 1, 'COMMA', 3, 'POINT') : '3.850'}"></span> (estimado) PEN
+                            </small>
+                        </div>
+
+                        <!-- Producto individual (solo si hay 1 item) -->
+                        <div th:if="${carrito.size() == 1}" class="mb-4">
+                            <h6 class="fw-bold mb-2">Producto</h6>
+                            <div class="d-flex justify-content-between small">
+                                <span th:text="${carrito[0].titulo}"></span>
+                                <span>1</span>
+                                <span th:text="'S/ ' + ${#numbers.formatDecimal(carrito[0].getSubtotal(), 1, 'COMMA', 2, 'POINT')}"></span>
                             </div>
                         </div>
-                        
-                        <!-- Botones de acción -->
-                        <div class="d-grid gap-2">
-                            <a th:href="@{/checkout}" class="btn btn-success btn-lg">
-                                <i class="bi bi-credit-card me-2"></i>Proceder al Pago
-                            </a>
-                            <a th:href="@{/compras/estadisticas}" class="btn btn-outline-info">
-                                <i class="bi bi-bar-chart me-2"></i>Ver Estadísticas
+
+                        <!-- Botón Continuar al Checkout -->
+                        <div class="d-grid mb-3">
+                            <a th:href="@{/carrito/checkout}" class="btn btn-primary btn-lg">
+                                <i class="bi bi-credit-card me-2"></i>Continuar al Pago
                             </a>
                         </div>
-                        
-                        <!-- Información adicional -->
-                        <div class="mt-4 pt-3 border-top">
-                            <small class="text-muted d-block mb-2">
+
+                        <!-- Información de pago segura -->
+                        <div class="payment-info">
+                            <p class="mb-2 text-center">
                                 <i class="bi bi-shield-check text-success me-1"></i>
-                                Compra 100% segura
-                            </small>
-                            <small class="text-muted d-block mb-2">
-                                <i class="bi bi-arrow-counterclockwise text-warning me-1"></i>
-                                Devolución en 30 días
-                            </small>
-                            <small class="text-muted d-block">
-                                <i class="bi bi-headset text-primary me-1"></i>
-                                Soporte 24/7
-                            </small>
+                                Pago 100% seguro
+                            </p>
+                            <p class="mb-2 text-center">
+                                <i class="bi bi-credit-card me-1"></i>
+                                Tarjetas aceptadas: Visa, Mastercard
+                            </p>
+                            <p class="mb-0 text-center">
+                                <i class="bi bi-lightning me-1"></i>
+                                Proceso rápido en 2 minutos
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -274,16 +321,6 @@
                     if (!confirm('¿Eliminar este artículo del carrito?')) {
                         e.preventDefault();
                     }
-                });
-            });
-            
-            // Mostrar cantidad al cambiar
-            const quantityButtons = document.querySelectorAll('.btn-quantity');
-            quantityButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const form = this.closest('form');
-                    const cantidadInput = form.querySelector('input[name="cantidad"]');
-                    console.log('Cambiando cantidad a:', cantidadInput.value);
                 });
             });
         });
