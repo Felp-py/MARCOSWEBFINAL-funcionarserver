@@ -18,14 +18,10 @@ public class MetodoPago {
     
     @Column(name = "descripcion")
     private String descripcion;
-    
-    @Column(name = "activo")
-    private Boolean activo = true;
-    
+
     @OneToMany(mappedBy = "metodoPago")
     private List<Venta> ventas = new ArrayList<>();
-    
-    // Constructor
+
     public MetodoPago() {}
     
     public MetodoPago(String nombre, String descripcion) {
@@ -33,7 +29,6 @@ public class MetodoPago {
         this.descripcion = descripcion;
     }
     
-    // Getters y Setters
     public Integer getIdMetodoPago() {
         return idMetodoPago;
     }
@@ -56,14 +51,6 @@ public class MetodoPago {
     
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
-    }
-    
-    public Boolean getActivo() {
-        return activo;
-    }
-    
-    public void setActivo(Boolean activo) {
-        this.activo = activo;
     }
     
     public List<Venta> getVentas() {

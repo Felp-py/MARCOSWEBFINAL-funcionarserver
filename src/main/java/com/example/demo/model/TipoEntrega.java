@@ -24,9 +24,6 @@ public class TipoEntrega {
     @Column(name = "costo")
     private BigDecimal costo;
     
-    @Column(name = "activo")
-    private Boolean activo = true;
-    
     @OneToMany(mappedBy = "tipoEntrega")
     private List<Venta> ventas = new ArrayList<>();
     
@@ -70,14 +67,6 @@ public class TipoEntrega {
     
     public void setCosto(BigDecimal costo) {
         this.costo = costo;
-    }
-    
-    public Boolean getActivo() {
-        return activo;
-    }
-    
-    public void setActivo(Boolean activo) {
-        this.activo = activo;
     }
     
     public List<Venta> getVentas() {

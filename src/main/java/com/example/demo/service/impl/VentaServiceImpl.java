@@ -50,15 +50,15 @@ public class VentaServiceImpl implements VentaService {
     @Transactional
     public Venta procesarCompra(List<ItemCarrito> carrito,
                                 Cliente cliente,
-                                String metodoPago,        // CORREGIDO: Ahora es String
-                                String tipoEntrega,       // CORREGIDO: Ahora es String
+                                MetodoPago metodoPago,
+                                TipoEntrega tipoEntrega,
                                 BigDecimal totalCalculado) {
 
         // 1. Crear y guardar la venta
         Venta nuevaVenta = new Venta();
         nuevaVenta.setCliente(cliente);
-        nuevaVenta.setMetodoPago(metodoPago);        // CORREGIDO: Ahora recibe String
-        nuevaVenta.setTipoEntrega(tipoEntrega);      // CORREGIDO: Ahora recibe String
+        nuevaVenta.setMetodoPago(metodoPago);
+        nuevaVenta.setTipoEntrega(tipoEntrega);
         nuevaVenta.setTotal(totalCalculado);
         nuevaVenta.setFechaVenta(LocalDateTime.now());
 
@@ -66,7 +66,6 @@ public class VentaServiceImpl implements VentaService {
 
         // 2. Crear detalles de venta y actualizar stock
         for (ItemCarrito item : carrito) {
-            // Buscar libro (nota: tu LibroRepository usa Long como ID)
             Optional<Libro> libroOpt = libroRepository.findById(item.getIdLibro());
             
             if (libroOpt.isEmpty()) {
@@ -75,7 +74,6 @@ public class VentaServiceImpl implements VentaService {
             
             Libro libro = libroOpt.get();
             
-            // Verificar stock
             if (libro.getStock() < item.getCantidad()) {
                 throw new RuntimeException("Stock insuficiente para: " + libro.getTitulo() + 
                                            ". Stock disponible: " + libro.getStock());
@@ -88,13 +86,12 @@ public class VentaServiceImpl implements VentaService {
             detalle.setCantidad(item.getCantidad());
             detalle.setPrecioUnitario(item.getPrecio());
             
-            // Calcular subtotal (esto es importante para las estadísticas)
             BigDecimal subtotal = item.getPrecio().multiply(BigDecimal.valueOf(item.getCantidad()));
             detalle.setSubtotal(subtotal);
             
             detalleVentaRepository.save(detalle);
             
-            // Actualizar stock del libro
+            // Actualizar stock
             libro.setStock(libro.getStock() - item.getCantidad());
             libroRepository.save(libro);
         }

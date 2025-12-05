@@ -6,8 +6,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springdoc.core.converters.models.Sort;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +24,6 @@ import java.util.Optional;
 public class CheckoutController {
     
     private static final BigDecimal TASA_IMPUESTOS = new BigDecimal("0.18");
-    private static final BigDecimal COSTO_ENVIO = new BigDecimal("10.00");
     private static final BigDecimal TASA_CAMBIO_FIJA = new BigDecimal("3.80");
     
     private final VentaRepository ventaRepository;
@@ -34,18 +31,33 @@ public class CheckoutController {
     private final LibroRepository libroRepository;
     private final UsuarioRepository usuarioRepository;
     private final ClienteRepository clienteRepository;
-    
+    private final MetodoPagoRepository metodoPagoRepository;
+    private final TipoEntregaRepository tipoEntregaRepository;
     
     public CheckoutController(VentaRepository ventaRepository,
                             DetalleVentaRepository detalleVentaRepository,
                             LibroRepository libroRepository,
                             UsuarioRepository usuarioRepository,
-                            ClienteRepository clienteRepository) {
+                            ClienteRepository clienteRepository,
+                            MetodoPagoRepository metodoPagoRepository,
+                            TipoEntregaRepository tipoEntregaRepository) {
         this.ventaRepository = ventaRepository;
         this.detalleVentaRepository = detalleVentaRepository;
         this.libroRepository = libroRepository;
         this.usuarioRepository = usuarioRepository;
         this.clienteRepository = clienteRepository;
+        this.metodoPagoRepository = metodoPagoRepository;
+        this.tipoEntregaRepository = tipoEntregaRepository;
+    }
+    
+    @ModelAttribute("metodosPago")
+    public List<MetodoPago> cargarMetodosPago() {
+        return metodoPagoRepository.findAll();
+    }
+    
+    @ModelAttribute("tiposEntrega")
+    public List<TipoEntrega> cargarTiposEntrega() {
+        return tipoEntregaRepository.findAll();
     }
     
     @ModelAttribute("datosCompra")
@@ -92,8 +104,8 @@ public class CheckoutController {
     @Transactional
     public String procesarPago(@ModelAttribute("carrito") List<ItemCarrito> carrito,
                             @ModelAttribute("datosCompra") DatosCompra datosCompra,
-                            @RequestParam String tipoEntrega,
-                            @RequestParam String metodoPago,
+                            @RequestParam Integer idMetodoPago,
+                            @RequestParam Integer idTipoEntrega,
                             @RequestParam(defaultValue = "PEN") String moneda,
                             @RequestParam(required = false) String direccion,
                             @RequestParam(required = false) String distrito,
@@ -108,7 +120,11 @@ public class CheckoutController {
             System.out.println("Carrito tamaño: " + carrito.size());
             
             // 1. VALIDACIONES
-            if ("delivery".equals(tipoEntrega)) {
+            // Obtener tipo de entrega para validar
+            TipoEntrega tipoEntrega = tipoEntregaRepository.findById(idTipoEntrega)
+                    .orElseThrow(() -> new RuntimeException("Tipo de entrega no válido"));
+            
+            if ("delivery".equals(tipoEntrega.getNombre().toLowerCase())) {
                 if (direccion == null || direccion.trim().isEmpty() ||
                     distrito == null || distrito.trim().isEmpty()) {
                     System.out.println("❌ Error: Dirección incompleta para delivery");
@@ -118,16 +134,13 @@ public class CheckoutController {
                 }
             }
             
-            if (metodoPago == null || metodoPago.trim().isEmpty()) {
-                System.out.println("❌ Error: Método de pago no seleccionado");
-                redirectAttributes.addFlashAttribute("error", 
-                    "Por favor selecciona un método de pago");
-                return "redirect:/checkout";
-            }
+            // Obtener método de pago
+            MetodoPago metodoPago = metodoPagoRepository.findById(idMetodoPago)
+                    .orElseThrow(() -> new RuntimeException("Método de pago no válido"));
             
             // 2. CALCULAR TOTALES
             BigDecimal subtotal = calcularSubtotal(carrito);
-            BigDecimal envio = "delivery".equals(tipoEntrega) ? COSTO_ENVIO : BigDecimal.ZERO;
+            BigDecimal envio = tipoEntrega.getCosto() != null ? tipoEntrega.getCosto() : BigDecimal.ZERO;
             BigDecimal impuestos = subtotal.multiply(TASA_IMPUESTOS)
                     .setScale(2, RoundingMode.HALF_UP);
             BigDecimal total = subtotal.add(envio).add(impuestos);
@@ -165,7 +178,7 @@ public class CheckoutController {
                 nuevoCliente.setCorreoCliente(usuario.getCorreo());
                 nuevoCliente.setDireccion(direccion);
                 nuevoCliente.setTelefono("999999999");
-                clienteRepository.save(nuevoCliente);
+                nuevoCliente = clienteRepository.save(nuevoCliente);
                 clienteOpt = Optional.of(nuevoCliente);
                 System.out.println("✅ Nuevo cliente creado - ID: " + nuevoCliente.getIdCliente());
             }
@@ -177,18 +190,18 @@ public class CheckoutController {
             // 4. CREAR VENTA EN LA BASE DE DATOS
             Venta venta = new Venta();
             venta.setCliente(cliente);
-            venta.setTotal(total);
-            venta.setFechaVenta(LocalDateTime.now());
             venta.setMetodoPago(metodoPago);
             venta.setTipoEntrega(tipoEntrega);
+            venta.setTotal(total);
+            venta.setFechaVenta(LocalDateTime.now());
             
             System.out.println("\n" + "-".repeat(30));
             System.out.println("GUARDANDO VENTA EN BD");
             System.out.println("-".repeat(30));
             System.out.println("Datos venta:");
             System.out.println("- Cliente ID: " + cliente.getIdCliente());
-            System.out.println("- Método pago: " + metodoPago);
-            System.out.println("- Tipo entrega: " + tipoEntrega);
+            System.out.println("- Método pago: " + metodoPago.getNombre());
+            System.out.println("- Tipo entrega: " + tipoEntrega.getNombre());
             System.out.println("- Total: S/ " + total);
             
             // Verificar estado antes de guardar
@@ -295,8 +308,8 @@ public class CheckoutController {
             System.out.println("📦 Número de pedido: " + numeroPedido);
             System.out.println("💰 Total de la venta: S/ " + total);
             System.out.println("📅 Fecha de venta: " + venta.getFechaVenta());
-            System.out.println("💳 Método de pago: " + venta.getMetodoPago());
-            System.out.println("🚚 Tipo de entrega: " + venta.getTipoEntrega());
+            System.out.println("💳 Método de pago: " + venta.getMetodoPago().getNombre());
+            System.out.println("🚚 Tipo de entrega: " + venta.getTipoEntrega().getNombre());
             
             // Verificar detalles guardados
             System.out.println("\n" + "-".repeat(30));
@@ -312,48 +325,9 @@ public class CheckoutController {
                 System.out.println("   - Stock restante: " + detalle.getLibro().getStock());
             }
             
-            // Verificar contadores en BD
-            System.out.println("\n" + "-".repeat(30));
-            System.out.println("CONTADORES EN BASE DE DATOS");
-            System.out.println("-".repeat(30));
-            System.out.println("📊 Total ventas en BD: " + ventaRepository.count());
-            System.out.println("📈 Total detalles en BD: " + detalleVentaRepository.count());
-            
-            // Verificar última venta en BD
-            List<Venta> todasVentasBD = ventaRepository.findAll();
-            if (!todasVentasBD.isEmpty()) {
-                // Encontrar la más reciente manualmente
-                Venta masRecienteBD = todasVentasBD.get(0);
-                for (Venta v : todasVentasBD) {
-                    if (v.getIdVenta() > masRecienteBD.getIdVenta()) {
-                        masRecienteBD = v;
-                    }
-                }
-                System.out.println("🆕 Última venta en BD:");
-                System.out.println("   - ID: " + masRecienteBD.getIdVenta());
-                System.out.println("   - Total: S/ " + masRecienteBD.getTotal());
-                System.out.println("   - Fecha: " + masRecienteBD.getFechaVenta());
-                System.out.println("   - Cliente ID: " + masRecienteBD.getCliente().getIdCliente());
-            } else {
-                System.out.println("ℹ️ No hay ventas en BD");
-            }
-            
-            // Verificar libros actualizados en BD
-            System.out.println("\n" + "-".repeat(30));
-            System.out.println("STOCK ACTUALIZADO EN BD");
-            System.out.println("-".repeat(30));
-            for (DetalleVenta detalle : detalles) {
-                Optional<Libro> libroBD = libroRepository.findById(detalle.getLibro().getIdLibro());
-                if (libroBD.isPresent()) {
-                    Libro libroActualizadoBD = libroBD.get();
-                    System.out.println("📕 " + libroActualizadoBD.getTitulo());
-                    System.out.println("   - Stock final en BD: " + libroActualizadoBD.getStock());
-                }
-            }
-            
             // 7. GUARDAR DATOS DE LA COMPRA PARA LA SESIÓN
-            datosCompra.setTipoEntrega(tipoEntrega);
-            datosCompra.setMetodoPago(metodoPago);
+            datosCompra.setTipoEntrega(tipoEntrega.getNombre());
+            datosCompra.setMetodoPago(metodoPago.getNombre());
             datosCompra.setDireccion(direccion);
             datosCompra.setDistrito(distrito);
             datosCompra.setCiudad(ciudad != null ? ciudad : "Lima");
@@ -404,8 +378,6 @@ public class CheckoutController {
         }
     }
 
-    
-    
     @GetMapping("/confirmacion")
     public String mostrarConfirmacion(@ModelAttribute("carrito") List<ItemCarrito> carrito,
                                      @ModelAttribute("datosCompra") DatosCompra datosCompra,
@@ -432,7 +404,6 @@ public class CheckoutController {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
-    // Agrega este método al final de la clase CheckoutController (antes del cierre })
     @GetMapping("/verificarDatos")
     @ResponseBody
     public String verificarDatos() {
@@ -457,9 +428,7 @@ public class CheckoutController {
             // Verificar últimas 5 ventas
             resultado.append("\n=== ÚLTIMAS 5 VENTAS ===\n");
             try {
-                // Método seguro: obtener todas y luego limitar
                 List<Venta> todasVentas = ventaRepository.findAll();
-                // Ordenar manualmente por ID descendente
                 todasVentas.sort((v1, v2) -> v2.getIdVenta().compareTo(v1.getIdVenta()));
                 
                 List<Venta> ultimasVentas = todasVentas.size() > 5 ? 
@@ -472,9 +441,9 @@ public class CheckoutController {
                         resultado.append("📋 ID: ").append(v.getIdVenta())
                                 .append(" | Total: S/ ").append(v.getTotal())
                                 .append(" | Fecha: ").append(v.getFechaVenta())
-                                .append(" | Método: ").append(v.getMetodoPago() != null ? v.getMetodoPago() : "N/A")
-                                .append(" | Entrega: ").append(v.getTipoEntrega() != null ? v.getTipoEntrega() : "N/A")
-                                .append(" | Cliente ID: ").append(v.getCliente() != null ? v.getCliente().getIdCliente() : "N/A")
+                                .append(" | Método: ").append(v.getMetodoPago() != null ? v.getMetodoPago().getNombre() : "N/A")
+                                .append(" | Entrega: ").append(v.getTipoEntrega() != null ? v.getTipoEntrega().getNombre() : "N/A")
+                                .append(" | Cliente: ").append(v.getCliente() != null ? v.getCliente().getNombreCliente() : "N/A")
                                 .append("\n");
                     }
                 }
@@ -578,8 +547,8 @@ public class CheckoutController {
                 sb.append("ID: ").append(ultimaVenta.getIdVenta()).append("\n");
                 sb.append("Total: S/ ").append(ultimaVenta.getTotal()).append("\n");
                 sb.append("Fecha: ").append(ultimaVenta.getFechaVenta()).append("\n");
-                sb.append("Método: ").append(ultimaVenta.getMetodoPago()).append("\n");
-                sb.append("Cliente ID: ").append(ultimaVenta.getCliente().getIdCliente()).append("\n");
+                sb.append("Método: ").append(ultimaVenta.getMetodoPago() != null ? ultimaVenta.getMetodoPago().getNombre() : "N/A").append("\n");
+                sb.append("Cliente ID: ").append(ultimaVenta.getCliente() != null ? ultimaVenta.getCliente().getIdCliente() : "N/A").append("\n");
                 sb.append("</pre>");
             } else {
                 sb.append("<p class='warning'>⚠️ No hay ventas registradas</p>");
@@ -621,7 +590,7 @@ public class CheckoutController {
         return sb.toString();
     }
     
-    // Clase DTO para datos de la compra
+    // Clase DTO para datos de la compra - MOVIDA AQUÍ
     public static class DatosCompra {
         private String tipoEntrega;
         private String metodoPago;
@@ -689,6 +658,4 @@ public class CheckoutController {
             return "PEN".equals(moneda) ? "S/" : "US$";
         }
     }
-
-    
 }

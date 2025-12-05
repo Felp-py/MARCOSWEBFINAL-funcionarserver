@@ -3,6 +3,7 @@ package com.example.demo.model;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "venta")
@@ -13,42 +14,113 @@ public class Venta {
     @Column(name = "id_venta")
     private Integer idVenta;
     
-    @ManyToOne
-    @JoinColumn(name = "id_cliente")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_cliente", nullable = false)
     private Cliente cliente;
     
-    @Column(name = "metodo_pago", length = 50)
-    private String metodoPago;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_metodo_pago", nullable = false)
+    private MetodoPago metodoPago;
     
-    @Column(name = "tipo_entrega", length = 50)
-    private String tipoEntrega;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_tipo_entrega", nullable = false)
+    private TipoEntrega tipoEntrega;
     
-    @Column(name = "total", nullable = false)
+    @Column(name = "total", nullable = false, precision = 10, scale = 2)
     private BigDecimal total;
     
-    @Column(name = "fecha_venta")
+    @Column(name = "fecha_venta", nullable = false)
     private LocalDateTime fechaVenta;
     
+    // Constructor vacío
     public Venta() {
         this.fechaVenta = LocalDateTime.now();
     }
     
-    // Getters y Setters...
-    public Integer getIdVenta() { return idVenta; }
-    public void setIdVenta(Integer idVenta) { this.idVenta = idVenta; }
+    // Constructor con parámetros
+    public Venta(Cliente cliente, MetodoPago metodoPago, TipoEntrega tipoEntrega, 
+                BigDecimal total, LocalDateTime fechaVenta) {
+        this.cliente = cliente;
+        this.metodoPago = metodoPago;
+        this.tipoEntrega = tipoEntrega;
+        this.total = total;
+        this.fechaVenta = fechaVenta != null ? fechaVenta : LocalDateTime.now();
+    }
     
-    public Cliente getCliente() { return cliente; }
-    public void setCliente(Cliente cliente) { this.cliente = cliente; }
+    // Getters y Setters
+    public Integer getIdVenta() {
+        return idVenta;
+    }
     
-    public String getMetodoPago() { return metodoPago; }
-    public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
+    public void setIdVenta(Integer idVenta) {
+        this.idVenta = idVenta;
+    }
     
-    public String getTipoEntrega() { return tipoEntrega; }
-    public void setTipoEntrega(String tipoEntrega) { this.tipoEntrega = tipoEntrega; }
+    public Cliente getCliente() {
+        return cliente;
+    }
     
-    public BigDecimal getTotal() { return total; }
-    public void setTotal(BigDecimal total) { this.total = total; }
+    public void setCliente(Cliente cliente) {
+        this.cliente = cliente;
+    }
     
-    public LocalDateTime getFechaVenta() { return fechaVenta; }
-    public void setFechaVenta(LocalDateTime fechaVenta) { this.fechaVenta = fechaVenta; }
+    public MetodoPago getMetodoPago() {
+        return metodoPago;
+    }
+    
+    public void setMetodoPago(MetodoPago metodoPago) {
+        this.metodoPago = metodoPago;
+    }
+    
+    // Método conveniente para obtener el nombre del método de pago
+    public String getMetodoPagoNombre() {
+        return metodoPago != null ? metodoPago.getNombre() : "";
+    }
+    
+    public TipoEntrega getTipoEntrega() {
+        return tipoEntrega;
+    }
+    
+    public void setTipoEntrega(TipoEntrega tipoEntrega) {
+        this.tipoEntrega = tipoEntrega;
+    }
+    
+    // Método conveniente para obtener el nombre del tipo de entrega
+    public String getTipoEntregaNombre() {
+        return tipoEntrega != null ? tipoEntrega.getNombre() : "";
+    }
+    
+    public BigDecimal getTotal() {
+        return total;
+    }
+    
+    public void setTotal(BigDecimal total) {
+        this.total = total;
+    }
+    
+    public LocalDateTime getFechaVenta() {
+        return fechaVenta;
+    }
+    
+    public void setFechaVenta(LocalDateTime fechaVenta) {
+        this.fechaVenta = fechaVenta;
+    }
+    
+    // Métodos útiles
+        public String getFechaVentaFormateada() {
+        if (fechaVenta != null) {
+            return fechaVenta.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        }
+        return "";
+    }
+    
+    @Override
+    public String toString() {
+        return "Venta{" +
+                "idVenta=" + idVenta +
+                ", cliente=" + (cliente != null ? cliente.getNombreCliente() : "null") +
+                ", total=" + total +
+                ", fechaVenta=" + fechaVenta +
+                '}';
+    }
 }
