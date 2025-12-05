@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout - Bibliosfera</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .form-check-input:checked {
+            background-color: #198754;
+            border-color: #198754;
+        }
+        .step-indicator {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .step-active {
+            background-color: #198754;
+            color: white;
+        }
+        .step-inactive {
+            background-color: #e9ecef;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container py-4">
+        <!-- Pasos del proceso -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-center align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="step-indicator step-active me-2">
+                            1
+                        </div>
+                        <span class="fw-bold text-success">Carrito</span>
+                    </div>
+                    
+                    <div class="mx-3" style="width: 60px; height: 2px; background-color: #198754;"></div>
+                    
+                    <div class="d-flex align-items-center">
+                        <div class="step-indicator step-active me-2">
+                            2
+                        </div>
+                        <span class="fw-bold text-success">Checkout</span>
+                    </div>
+                    
+                    <div class="mx-3" style="width: 60px; height: 2px; background-color: #e9ecef;"></div>
+                    
+                    <div class="d-flex align-items-center">
+                        <div class="step-indicator step-inactive me-2">
+                            3
+                        </div>
+                        <span class="text-muted">Pago</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Formulario de entrega -->
+            <div class="col-lg-8 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-truck me-2"></i>Método de Entrega
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="entregaForm">
+                            <div class="mb-4">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="tipoEntrega" 
+                                           id="retiroTienda" value="retiro" checked>
+                                    <label class="form-check-label" for="retiroTienda">
+                                        <h6 class="mb-1">
+                                            <i class="bi bi-shop me-2"></i>Retiro en Tienda
+                                        </h6>
+                                        <p class="text-muted mb-0 small">
+                                            Recoge tu pedido en nuestra tienda principal. Av. Ejemplo 123, Lima.
+                                            Horario: Lunes a Sábado 9am - 8pm.
+                                        </p>
+                                        <span class="badge bg-success mt-2">GRATIS</span>
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="tipoEntrega" 
+                                           id="delivery" value="delivery">
+                                    <label class="form-check-label" for="delivery">
+                                        <h6 class="mb-1">
+                                            <i class="bi bi-house-door me-2"></i>Delivery a Domicilio
+                                        </h6>
+                                        <p class="text-muted mb-0 small">
+                                            Entrega en la dirección que proporciones. Tiempo estimado: 2-3 días hábiles.
+                                        </p>
+                                        <span class="badge bg-warning text-dark mt-2">S/ 10.00</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Dirección de entrega (oculto inicialmente) -->
+                            <div id="direccionSection" class="d-none">
+                                <h6 class="mb-3">Dirección de Entrega</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="direccion" class="form-label">Dirección *</label>
+                                        <input type="text" class="form-control" id="direccion" 
+                                               placeholder="Av. Principal 123">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="distrito" class="form-label">Distrito *</label>
+                                        <input type="text" class="form-control" id="distrito" 
+                                               placeholder="Miraflores">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="ciudad" class="form-label">Ciudad *</label>
+                                        <input type="text" class="form-control" id="ciudad" 
+                                               placeholder="Lima" value="Lima">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="referencia" class="form-label">Referencia</label>
+                                        <input type="text" class="form-control" id="referencia" 
+                                               placeholder="Frente al parque">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Resumen de productos -->
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-list-check me-2"></i>Resumen de Productos
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-end">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="item : ${carrito}">
+                                        <td th:text="${item.titulo}"></td>
+                                        <td class="text-center" th:text="${item.cantidad}"></td>
+                                        <td class="text-end" 
+                                            th:text="'S/ ' + ${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen del pedido -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-receipt me-2"></i>Resumen del Pedido
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Desglose de precios -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Subtotal:</span>
+                                <span id="subtotal" th:text="'S/ ' + ${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}"></span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Envío:</span>
+                                <span id="envioDisplay">GRATIS</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="text-muted">Impuestos (18%):</span>
+                                <span id="impuestos" th:text="'S/ ' + ${#numbers.formatDecimal(impuestos, 1, 'COMMA', 2, 'POINT')}"></span>
+                            </div>
+                            
+                            <hr>
+                            <div class="d-flex justify-content-between fs-5 fw-bold">
+                                <span>TOTAL:</span>
+                                <span id="total" class="text-success" 
+                                      th:text="'S/ ' + ${#numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}">
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Selector de moneda -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Moneda de Pago</label>
+                            <div class="d-flex">
+                                <select id="monedaSelector" class="form-select">
+                                    <option value="PEN" selected>Soles (S/)</option>
+                                    <option value="USD">Dólares (US$)</option>
+                                </select>
+                                <button id="convertirBtn" class="btn btn-outline-secondary ms-2">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </button>
+                            </div>
+                            <div id="tasaCambio" class="mt-2 small text-muted">
+                                Tasa de cambio: 1 USD = <span id="tasaActual">3.85</span> PEN
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="d-grid gap-2">
+                            <button id="continuarPago" class="btn btn-success btn-lg">
+                                <i class="bi bi-lock me-2"></i>Continuar al Pago
+                            </button>
+                            <a th:href="@{/carrito}" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-left me-2"></i>Volver al Carrito
+                            </a>
+                        </div>
+                        
+                        <!-- Información adicional -->
+                        <div class="mt-4 pt-3 border-top">
+                            <small class="text-muted d-block mb-2">
+                                <i class="bi bi-shield-check text-success me-1"></i>
+                                Pago 100% seguro
+                            </small>
+                            <small class="text-muted d-block mb-2">
+                                <i class="bi bi-credit-card text-primary me-1"></i>
+                                Tarjetas aceptadas: Visa, Mastercard
+                            </small>
+                            <small class="text-muted d-block">
+                                <i class="bi bi-clock text-warning me-1"></i>
+                                Proceso rápido en 2 minutos
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variables globales
+        let subtotalBase = parseFloat(document.getElementById('subtotal').textContent.replace('S/ ', ''));
+        let impuestosBase = parseFloat(document.getElementById('impuestos').textContent.replace('S/ ', ''));
+        let totalBase = parseFloat(document.getElementById('total').textContent.replace('S/ ', ''));
+        let tasaCambioActual = 3.85; // Valor inicial
+        let monedaActual = 'PEN';
+        let costoEnvio = 0;
+
+        // API de tipo de cambio gratuita (ExchangeRate-API)
+        const API_KEY = 'tu_api_key_gratuita'; // Obtén una en https://www.exchangerate-api.com/
+        const API_URL = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/PEN`;
+
+        // Alternativa gratuita sin API_KEY (menos precisa)
+        // const API_URL = 'https://api.exchangerate-api.com/v4/latest/PEN';
+
+        // Toggle dirección de entrega
+        document.querySelectorAll('input[name="tipoEntrega"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const direccionSection = document.getElementById('direccionSection');
+                if (this.value === 'delivery') {
+                    direccionSection.classList.remove('d-none');
+                    costoEnvio = 10.00;
+                } else {
+                    direccionSection.classList.add('d-none');
+                    costoEnvio = 0;
+                }
+                actualizarTotales();
+            });
+        });
+
+        // Función para actualizar totales
+        function actualizarTotales() {
+            let nuevoTotal = subtotalBase + costoEnvio + impuestosBase;
+            
+            // Convertir si está en dólares
+            if (monedaActual === 'USD') {
+                nuevoTotal = nuevoTotal / tasaCambioActual;
+            }
+            
+            // Actualizar displays
+            const envioDisplay = document.getElementById('envioDisplay');
+            const totalDisplay = document.getElementById('total');
+            
+            if (costoEnvio === 0) {
+                envioDisplay.textContent = 'GRATIS';
+            } else {
+                envioDisplay.textContent = monedaActual === 'PEN' 
+                    ? `S/ ${costoEnvio.toFixed(2)}`
+                    : `US$ ${(costoEnvio / tasaCambioActual).toFixed(2)}`;
+            }
+            
+            totalDisplay.textContent = monedaActual === 'PEN'
+                ? `S/ ${nuevoTotal.toFixed(2)}`
+                : `US$ ${nuevoTotal.toFixed(2)}`;
+        }
+
+        // Obtener tasa de cambio
+        async function obtenerTasaCambio() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                if (data && data.conversion_rates && data.conversion_rates.USD) {
+                    tasaCambioActual = data.conversion_rates.USD;
+                    document.getElementById('tasaActual').textContent = tasaCambioActual.toFixed(3);
+                    
+                    // Si ya está en USD, actualizar totales
+                    if (monedaActual === 'USD') {
+                        actualizarTotales();
+                    }
+                }
+            } catch (error) {
+                console.error('Error obteniendo tasa de cambio:', error);
+                // Usar tasa por defecto
+                tasaCambioActual = 3.85;
+                document.getElementById('tasaActual').textContent = '3.850 (estimado)';
+            }
+        }
+
+        // Cambiar moneda
+        document.getElementById('monedaSelector').addEventListener('change', function() {
+            monedaActual = this.value;
+            actualizarTotales();
+            
+            // Actualizar símbolos en la página
+            document.querySelectorAll('[id^="subtotal"], [id^="impuestos"]').forEach(el => {
+                if (el.id !== 'subtotal' && el.id !== 'impuestos') return;
+                let currentText = el.textContent;
+                if (monedaActual === 'USD') {
+                    el.textContent = currentText.replace('S/ ', 'US$ ');
+                } else {
+                    el.textContent = currentText.replace('US$ ', 'S/ ');
+                }
+            });
+        });
+
+        // Botón para convertir
+        document.getElementById('convertirBtn').addEventListener('click', function() {
+            obtenerTasaCambio();
+            this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+            setTimeout(() => {
+                this.innerHTML = '<i class="bi bi-arrow-repeat"></i>';
+            }, 1000);
+        });
+
+        // Continuar al pago
+        document.getElementById('continuarPago').addEventListener('click', function() {
+            const tipoEntrega = document.querySelector('input[name="tipoEntrega"]:checked').value;
+            
+            // Validar dirección si es delivery
+            if (tipoEntrega === 'delivery') {
+                const direccion = document.getElementById('direccion').value;
+                const distrito = document.getElementById('distrito').value;
+                const ciudad = document.getElementById('ciudad').value;
+                
+                if (!direccion.trim() || !distrito.trim() || !ciudad.trim()) {
+                    alert('Por favor completa todos los campos de dirección para delivery');
+                    return;
+                }
+            }
+            
+            // Preparar datos para enviar
+            const datosCheckout = {
+                tipoEntrega: tipoEntrega,
+                costoEnvio: costoEnvio,
+                moneda: monedaActual,
+                tasaCambio: tasaCambioActual,
+                total: document.getElementById('total').textContent,
+                // Aquí agregarías más datos según necesites
+            };
+            
+            // Guardar en localStorage para la siguiente página
+            localStorage.setItem('checkoutData', JSON.stringify(datosCheckout));
+            
+            // Redirigir a página de pago
+            alert('Redirigiendo a la página de pago...');
+            // window.location.href = '/pago'; // Descomenta cuando tengas la página de pago
+        });
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            obtenerTasaCambio();
+        });
+    </script>
+</body>
+</html>

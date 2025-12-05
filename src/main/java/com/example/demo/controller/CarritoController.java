@@ -141,7 +141,7 @@ public String actualizarCantidad(@RequestParam Long idLibro,
         return "redirect:/carrito";
     }
 
-    // Método auxiliar para calcular totales
+    // En el método calcularTotales
     private void calcularTotales(List<ItemCarrito> carrito, Model model) {
         // Subtotal
         BigDecimal subtotal = carrito.stream()
@@ -149,16 +149,14 @@ public String actualizarCantidad(@RequestParam Long idLibro,
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(2, RoundingMode.HALF_UP);
         
-        // Envío (gratis si > 50)
-        BigDecimal envio = subtotal.compareTo(MINIMO_ENVIO_GRATIS) >= 0 
-                ? BigDecimal.ZERO 
-                : COSTO_ENVIO;
+        // Envío inicialmente CERO - se calculará en checkout
+        BigDecimal envio = BigDecimal.ZERO;
         
         // Impuestos
         BigDecimal impuestos = subtotal.multiply(TASA_IMPUESTOS)
                 .setScale(2, RoundingMode.HALF_UP);
         
-        // Total
+        // Total sin envío
         BigDecimal total = subtotal.add(envio).add(impuestos)
                 .setScale(2, RoundingMode.HALF_UP);
         
@@ -168,8 +166,6 @@ public String actualizarCantidad(@RequestParam Long idLibro,
         model.addAttribute("impuestos", impuestos);
         model.addAttribute("total", total);
         model.addAttribute("minimoEnvioGratis", MINIMO_ENVIO_GRATIS);
-        
-        // Para compatibilidad con tu plantilla actual
         model.addAttribute("carrito", carrito);
     }
 }
