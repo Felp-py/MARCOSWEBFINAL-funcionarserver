@@ -1,7 +1,6 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.ItemCarrito;
-import com.example.demo.service.CurrencyService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -18,14 +17,9 @@ import java.util.List;
 @SessionAttributes({"carrito", "datosCompra"})
 public class CheckoutController {
     
-    private final CurrencyService currencyService;
-    
     private static final BigDecimal TASA_IMPUESTOS = new BigDecimal("0.18");
     private static final BigDecimal COSTO_ENVIO = new BigDecimal("10.00");
-    
-    public CheckoutController(CurrencyService currencyService) {
-        this.currencyService = currencyService;
-    }
+    private static final BigDecimal TASA_CAMBIO_FIJA = new BigDecimal("3.80"); // CAMBIO FIJO
     
     @ModelAttribute("datosCompra")
     public DatosCompra inicializarDatosCompra() {
@@ -47,13 +41,12 @@ public class CheckoutController {
                 .setScale(2, RoundingMode.HALF_UP);
         BigDecimal total = subtotal.add(impuestos);
         
-        // Conversión de moneda
-        BigDecimal tasaCambio = BigDecimal.ONE;
+        // Conversión de moneda con tasa fija 3.80
+        BigDecimal tasaCambio = TASA_CAMBIO_FIJA;
         BigDecimal totalEnMoneda = total;
         
         if ("USD".equals(moneda)) {
-            tasaCambio = currencyService.getExchangeRate("USD");
-            totalEnMoneda = currencyService.convertToUSD(total);
+            totalEnMoneda = total.divide(tasaCambio, 2, RoundingMode.HALF_UP);
         }
         
         // Agregar al modelo
@@ -65,9 +58,7 @@ public class CheckoutController {
         model.addAttribute("moneda", moneda);
         model.addAttribute("tasaCambio", tasaCambio);
         
-        // IMPORTANTE: Cambia esto según tu estructura de carpetas
-        return "checkout"; // Si está en templates/checkout.html
-        // O return "checkout/checkout"; // Si está en templates/checkout/checkout.html
+        return "checkout";
     }
     
     @PostMapping("/procesar")
@@ -83,9 +74,7 @@ public class CheckoutController {
                               RedirectAttributes redirectAttributes) {
         
         try {
-            System.out.println("DEBUG: Procesando pago SIMULADO - método: " + metodoPago);
-            
-            // 1. VALIDACIONES (igual que antes)
+            // 1. VALIDACIONES
             if ("delivery".equals(tipoEntrega)) {
                 if (direccion == null || direccion.trim().isEmpty() ||
                     distrito == null || distrito.trim().isEmpty()) {
@@ -101,20 +90,7 @@ public class CheckoutController {
                 return "redirect:/checkout";
             }
             
-            // 2. SIMULAR PROCESO DE PAGO
-            System.out.println("=== SIMULANDO PAGO ===");
-            System.out.println("1. Conectando con pasarela de pago...");
-            System.out.println("2. Validando tarjeta...");
-            System.out.println("3. Autorizando monto...");
-            
-            // Simular delay de red
-            Thread.sleep(1000);
-            
-            // Generar número de transacción simulado
-            String numeroTransaccion = "TRX-" + System.currentTimeMillis();
-            System.out.println("4. Transacción aprobada: " + numeroTransaccion);
-            
-            // 3. CALCULAR TOTALES
+            // 2. CALCULAR TOTALES
             BigDecimal subtotal = calcularSubtotal(carrito);
             BigDecimal envio = "delivery".equals(tipoEntrega) ? COSTO_ENVIO : BigDecimal.ZERO;
             BigDecimal impuestos = subtotal.multiply(TASA_IMPUESTOS)
@@ -124,10 +100,12 @@ public class CheckoutController {
             // Conversión si es USD
             BigDecimal totalFinal = total;
             if ("USD".equals(moneda)) {
-                totalFinal = currencyService.convertToUSD(total);
+                totalFinal = total.divide(TASA_CAMBIO_FIJA, 2, RoundingMode.HALF_UP);
             }
             
-            // 4. GUARDAR DATOS CON NÚMERO DE TRANSACCIÓN
+            // 3. GUARDAR DATOS DE LA COMPRA
+            String numeroPedido = "PED-" + System.currentTimeMillis();
+            
             datosCompra.setTipoEntrega(tipoEntrega);
             datosCompra.setMetodoPago(metodoPago);
             datosCompra.setDireccion(direccion);
@@ -139,28 +117,21 @@ public class CheckoutController {
             datosCompra.setEnvio(envio);
             datosCompra.setImpuestos(impuestos);
             datosCompra.setTotal(totalFinal);
-            datosCompra.setNumeroPedido("PED-" + System.currentTimeMillis());
+            datosCompra.setNumeroPedido(numeroPedido);
             datosCompra.setFecha(LocalDateTime.now());
             
-            // Agregar datos de transacción simulada
-            redirectAttributes.addFlashAttribute("transaccionId", numeroTransaccion);
+            // 4. PREPARAR DATOS PARA REDIRECCIÓN
             redirectAttributes.addFlashAttribute("pagoAprobado", true);
-            redirectAttributes.addFlashAttribute("mensajePago", "Pago simulado exitoso");
-            
-            // 5. REDIRIGIR A CONFIRMACIÓN
+            redirectAttributes.addFlashAttribute("numeroPedido", numeroPedido);
             redirectAttributes.addFlashAttribute("carrito", carrito);
             redirectAttributes.addFlashAttribute("datosCompra", datosCompra);
-            redirectAttributes.addFlashAttribute("subtotal", subtotal);
-            redirectAttributes.addFlashAttribute("envio", envio);
-            redirectAttributes.addFlashAttribute("impuestos", impuestos);
-            redirectAttributes.addFlashAttribute("total", totalFinal);
             
             return "redirect:/checkout/confirmacion";
             
         } catch (Exception e) {
             e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", 
-                "Error en pago simulado: " + e.getMessage());
+                "Error al procesar el pago: " + e.getMessage());
             return "redirect:/checkout";
         }
     }
@@ -178,34 +149,7 @@ public class CheckoutController {
             return "redirect:/checkout";
         }
         
-        // Si llegamos aquí con flash attributes, ya están en el modelo
         return "checkout/confirmacion";
-    }
-    
-    @PostMapping("/finalizar")
-    public String finalizarCompra(@ModelAttribute("carrito") List<ItemCarrito> carrito,
-                                 @ModelAttribute("datosCompra") DatosCompra datosCompra,
-                                 RedirectAttributes redirectAttributes) {
-        
-        try {
-            // Simular guardado en BD
-            System.out.println("Guardando compra: " + datosCompra.getNumeroPedido());
-            
-            // Limpiar carrito después de la compra
-            carrito.clear();
-            
-            redirectAttributes.addFlashAttribute("success", 
-                "¡Compra finalizada exitosamente! Número de pedido: " + datosCompra.getNumeroPedido());
-            redirectAttributes.addFlashAttribute("numeroPedido", datosCompra.getNumeroPedido());
-            
-            return "redirect:/compras/comprobante?pedido=" + datosCompra.getNumeroPedido();
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            redirectAttributes.addFlashAttribute("error", 
-                "Error al finalizar la compra: " + e.getMessage());
-            return "redirect:/checkout/confirmacion";
-        }
     }
     
     private BigDecimal calcularSubtotal(List<ItemCarrito> carrito) {
@@ -233,16 +177,10 @@ public class CheckoutController {
         private String numeroPedido;
         private LocalDateTime fecha;
         
-        // Constructor vacío IMPORTANTE
         public DatosCompra() {}
         
-        // Getters y setters
         public String getTipoEntrega() { return tipoEntrega; }
         public void setTipoEntrega(String tipoEntrega) { this.tipoEntrega = tipoEntrega; }
-        
-        public boolean isDelivery() {
-            return tipoEntrega != null && "delivery".equalsIgnoreCase(tipoEntrega);
-        }
         
         public String getMetodoPago() { return metodoPago; }
         public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
