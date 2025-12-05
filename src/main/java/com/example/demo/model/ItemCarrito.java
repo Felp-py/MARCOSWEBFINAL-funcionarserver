@@ -7,10 +7,11 @@ public class ItemCarrito {
     private String titulo;
     private BigDecimal precio;
     private Integer cantidad;
-    private String imagenUrl; // Asegúrate de tener este campo
+    private String imagenUrl;
 
     // Constructor
-    public ItemCarrito(Long idLibro, String titulo, BigDecimal precio, Integer cantidad, String imagenUrl) {
+    public ItemCarrito(Long idLibro, String titulo, BigDecimal precio, 
+                      Integer cantidad, String imagenUrl) {
         this.idLibro = idLibro;
         this.titulo = titulo;
         this.precio = precio;
@@ -18,12 +19,15 @@ public class ItemCarrito {
         this.imagenUrl = imagenUrl;
     }
 
-    // Getter para subtotal
+    // Getter para subtotal (calculado)
     public BigDecimal getSubtotal() {
+        if (precio == null || cantidad == null) {
+            return BigDecimal.ZERO;
+        }
         return precio.multiply(BigDecimal.valueOf(cantidad));
     }
 
-    // Getters y Setters
+    // Getters y Setters...
     public Long getIdLibro() { return idLibro; }
     public void setIdLibro(Long idLibro) { this.idLibro = idLibro; }
     
@@ -36,6 +40,6 @@ public class ItemCarrito {
     public Integer getCantidad() { return cantidad; }
     public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
     
-    public String getImagenUrl() { return imagenUrl; } // Getter para imagen
-    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; } // Setter para imagen
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 }

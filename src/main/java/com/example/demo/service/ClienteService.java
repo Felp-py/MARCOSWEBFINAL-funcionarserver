@@ -6,7 +6,8 @@ import java.util.Optional;
 
 public interface ClienteService {
     List<Cliente> findAll();
-    Optional<Cliente> findById(Integer id);
+    Optional<Cliente> findById(Long id);  // Usa Long aquí también
     Cliente save(Cliente cliente);
-    void deleteById(Integer id);
+    void deleteById(Long id);  // Usa Long aquí también
+    Optional<Cliente> findByIdUsuario(Integer idUsuario);
 }

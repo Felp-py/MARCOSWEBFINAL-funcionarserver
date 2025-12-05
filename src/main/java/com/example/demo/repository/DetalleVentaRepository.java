@@ -9,20 +9,16 @@ import java.util.List;
 @Repository
 public interface DetalleVentaRepository extends JpaRepository<DetalleVenta, Integer> {
     
-    // Sumar total de libros vendidos
     @Query("SELECT COALESCE(SUM(d.cantidad), 0) FROM DetalleVenta d")
     Long sumTotalLibrosVendidos();
     
-    // Obtener libros más vendidos
     @Query("SELECT l.titulo, SUM(d.cantidad) as totalVendido " +
            "FROM DetalleVenta d " +
            "JOIN d.libro l " +
            "GROUP BY l.idLibro, l.titulo " +
-           "ORDER BY totalVendido DESC " +
-           "LIMIT 10")
+           "ORDER BY totalVendido DESC")
     List<Object[]> findLibrosMasVendidos();
     
-    // Obtener distribución por categorías
     @Query("SELECT l.categoria.nombre, SUM(d.cantidad) as totalVendido " +
            "FROM DetalleVenta d " +
            "JOIN d.libro l " +

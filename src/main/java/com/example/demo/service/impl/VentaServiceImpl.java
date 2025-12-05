@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,32 +50,53 @@ public class VentaServiceImpl implements VentaService {
     @Transactional
     public Venta procesarCompra(List<ItemCarrito> carrito,
                                 Cliente cliente,
-                                MetodoPago metodoPago,
-                                TipoEntrega tipoEntrega,
+                                String metodoPago,        // CORREGIDO: Ahora es String
+                                String tipoEntrega,       // CORREGIDO: Ahora es String
                                 BigDecimal totalCalculado) {
 
+        // 1. Crear y guardar la venta
         Venta nuevaVenta = new Venta();
         nuevaVenta.setCliente(cliente);
-        nuevaVenta.setMetodoPago(metodoPago);
-        nuevaVenta.setTipoEntrega(tipoEntrega);
+        nuevaVenta.setMetodoPago(metodoPago);        // CORREGIDO: Ahora recibe String
+        nuevaVenta.setTipoEntrega(tipoEntrega);      // CORREGIDO: Ahora recibe String
         nuevaVenta.setTotal(totalCalculado);
+        nuevaVenta.setFechaVenta(LocalDateTime.now());
 
         Venta ventaGuardada = ventaRepository.save(nuevaVenta);
 
+        // 2. Crear detalles de venta y actualizar stock
         for (ItemCarrito item : carrito) {
-            // Esto ya debería funcionar si libroRepository usa Integer
-            Libro libro = libroRepository.findById(item.getIdLibro())
-                    .orElseThrow(() ->
-                            new RuntimeException("Libro no encontrado con ID: " + item.getIdLibro())
-                    );
-
+            // Buscar libro (nota: tu LibroRepository usa Long como ID)
+            Optional<Libro> libroOpt = libroRepository.findById(item.getIdLibro());
+            
+            if (libroOpt.isEmpty()) {
+                throw new RuntimeException("Libro no encontrado con ID: " + item.getIdLibro());
+            }
+            
+            Libro libro = libroOpt.get();
+            
+            // Verificar stock
+            if (libro.getStock() < item.getCantidad()) {
+                throw new RuntimeException("Stock insuficiente para: " + libro.getTitulo() + 
+                                           ". Stock disponible: " + libro.getStock());
+            }
+            
+            // Crear detalle de venta
             DetalleVenta detalle = new DetalleVenta();
             detalle.setVenta(ventaGuardada);
             detalle.setLibro(libro);
             detalle.setCantidad(item.getCantidad());
             detalle.setPrecioUnitario(item.getPrecio());
-
+            
+            // Calcular subtotal (esto es importante para las estadísticas)
+            BigDecimal subtotal = item.getPrecio().multiply(BigDecimal.valueOf(item.getCantidad()));
+            detalle.setSubtotal(subtotal);
+            
             detalleVentaRepository.save(detalle);
+            
+            // Actualizar stock del libro
+            libro.setStock(libro.getStock() - item.getCantidad());
+            libroRepository.save(libro);
         }
 
         return ventaGuardada;
