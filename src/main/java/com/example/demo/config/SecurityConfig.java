@@ -10,6 +10,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import java.util.Optional;
 
 @Configuration
@@ -55,7 +57,7 @@ public class SecurityConfig {
             System.out.println("🔑 Autenticando: " + usuario.getNombre());
             System.out.println("   Correo: " + usuario.getCorreo());
             System.out.println("   Rol asignado: " + rol);
-            System.out.println("   Password (hash): " + usuario.getContrasena()); // CORREGIDO: getContrasena
+            System.out.println("   Password (hash): " + usuario.getContrasena());
             
             // Asegurar que la contraseña no sea nula
             if (usuario.getContrasena() == null || usuario.getContrasena().isEmpty()) {
@@ -63,8 +65,8 @@ public class SecurityConfig {
             }
             
             return org.springframework.security.core.userdetails.User.builder()
-                .username(usuario.getCorreo()) // USAR CORREO como username para Spring Security
-                .password(usuario.getContrasena()) // CORREGIDO: getContrasena
+                .username(usuario.getCorreo())
+                .password(usuario.getContrasena())
                 .roles(rol)
                 .build();
         };
@@ -76,18 +78,42 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, accessDeniedException) -> {
+            System.out.println("Acceso denegado para: " + request.getRequestURI());
+            response.sendRedirect("/acceso-denegado");
+        };
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
             .authorizeHttpRequests(auth -> auth
-                // Rutas PÚBLICAS
+                // Rutas PÚBLICAS (sin autenticación)
                 .requestMatchers(
-                    "/", "/inicio", "/catalogo", "/nosotros", "/compras",
+                    "/", "/inicio", "/catalogo", "/nosotros",
                     "/login", "/registro/**", "/error",
                     "/css/**", "/js/**", "/img/**", "/webjars/**",
-                    "/registro/api/**", "/api/consulta/**", "/dni/**", "/api/**"
+                    "/registro/api/**", "/api/consulta/**", "/dni/**", "/api/**",
+                    "/acceso-denegado", "/carrito/**", "/checkout/**"
                 ).permitAll()
-                // Rutas ADMIN
-                .requestMatchers("/libros/**", "/admin/**").hasRole("ADMIN")
+                
+                // Rutas solo para ADMIN
+                .requestMatchers(
+                    "/libros/**", 
+                    "/admin/**",
+                    "/compras/estadisticas",  // SOLO ADMIN puede ver estadísticas
+                    "/compras/estadisticas/**" // También cualquier subruta
+                ).hasRole("ADMIN")
+                
+                // Rutas para ADMIN y USER (autenticados)
+                .requestMatchers(
+                    "/perfil/**",
+                    "/compras/**",  // Pero NO estadisticas
+                    "/checkout",
+                    "/pago/**"
+                ).hasAnyRole("USER", "ADMIN")
+                
                 // Todo lo demás requiere autenticación
                 .anyRequest().authenticated()
             )
@@ -104,6 +130,9 @@ public class SecurityConfig {
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
                 .permitAll()
+            )
+            .exceptionHandling(exception -> exception
+                .accessDeniedPage("/acceso-denegado") // Página personalizada para acceso denegado
             )
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers(

@@ -53,4 +53,8 @@ public class PaginaController {
         model.addAttribute("total", 0.0);
         return "compras";
     }
+     @GetMapping("/acceso-denegado")
+    public String accesoDenegado() {
+        return "acceso-denegado";
+    }
 }

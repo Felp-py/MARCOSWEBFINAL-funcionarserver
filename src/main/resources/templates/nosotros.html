@@ -5,6 +5,26 @@
     <title>Nosotros - Bibliosfera</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <style>
+        .floating-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .team-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .team-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        .stats-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+        }
+    </style>
 </head>
 <body>
 
@@ -18,6 +38,12 @@
                         <i class="bi bi-people-fill"></i> Nosotros
                     </h2>
                     <h4>"Una librería no es solo un lugar, es un equipo con pasión por las historias."</h4>
+                    <!-- Botón de estadísticas en el header -->
+                    <div class="mt-4">
+                        <a th:href="@{/compras/estadisticas}" class="btn btn-success btn-lg">
+                            <i class="bi bi-bar-chart-line me-2"></i>Ver Estadísticas de Compras
+                        </a>
+                    </div>
                 </div>
                 <div class="col-lg-6 col-12 text-center">
                     <img th:src="@{/img/lib5.jpg}" class="img-fluid rounded shadow" alt="Librería Bibliosfera">
@@ -33,11 +59,15 @@
             </div>
             <div class="col-lg-6 col-12 text-center text-lg-start mb-3 mb-lg-0">
                 <h2 class="text-dark">Sobre Nosotros</h2>
-                <p>
+                <p class="mb-4">
                     Somos un equipo apasionado por los libros y la lectura, dedicados a compartir historias que inspiran, emocionan y transforman.
                     Creemos que cada página tiene el poder de abrir nuevas perspectivas y conectar a las personas con mundos distintos.
                     Nuestro compromiso es ofrecer una experiencia cercana, accesible y enriquecedora.
                 </p>
+                <!-- Botón de estadísticas dentro de la sección -->
+                <a th:href="@{/compras/estadisticas}" class="btn btn-outline-primary">
+                    <i class="bi bi-graph-up me-2"></i>Explorar Métricas
+                </a>
             </div>
         </div>
     </section>
@@ -50,39 +80,79 @@
 
         <div class="row g-4">
             <div class="col-md-6">
-                <div class="card text-center bg-primary-subtle h-100">
+                <div class="card text-center bg-primary-subtle h-100 team-card">
                     <div class="card-body">
-                        <h3><i class="bi bi-person"></i> Solange Cepeda</h3>
-                        <p>Jefa de Marketing y directora ejecutiva</p>
+                        <div class="mb-3">
+                            <i class="bi bi-person-circle text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3>Solange Cepeda</h3>
+                        <p class="text-muted">Jefa de Marketing y directora ejecutiva</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card text-center bg-info-subtle h-100">
+                <div class="card text-center bg-info-subtle h-100 team-card">
                     <div class="card-body">
-                        <h3><i class="bi bi-person"></i> Miguel Alvarado</h3>
-                        <p>Licenciado experto y lector impulsivo</p>
+                        <div class="mb-3">
+                            <i class="bi bi-person-circle text-info" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3>Miguel Alvarado</h3>
+                        <p class="text-muted">Licenciado experto y lector impulsivo</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card text-center bg-primary-subtle h-100">
+                <div class="card text-center bg-primary-subtle h-100 team-card">
                     <div class="card-body">
-                        <h3><i class="bi bi-person"></i> Eduardo Vicuña</h3>
-                        <p>Director de logística e IT</p>
+                        <div class="mb-3">
+                            <i class="bi bi-person-circle text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3>Eduardo Vicuña</h3>
+                        <p class="text-muted">Director de logística e IT</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card text-center bg-info-subtle h-100">
+                <div class="card text-center bg-info-subtle h-100 team-card">
                     <div class="card-body">
-                        <h3><i class="bi bi-person"></i> Felix Cordova</h3>
-                        <p>Pasante dedicado y asesor legal</p>
+                        <div class="mb-3">
+                            <i class="bi bi-person-circle text-info" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3>Felix Cordova</h3>
+                        <p class="text-muted">Pasante dedicado y asesor legal</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
+
+    <!-- Sección destacada para estadísticas -->
+    <section class="container my-5">
+        <div class="stats-section text-white p-5 rounded shadow-lg">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h2 class="display-6 fw-bold mb-3">
+                        <i class="bi bi-bar-chart-line me-2"></i>¿Interesado en nuestros datos?
+                    </h2>
+                    <p class="lead mb-4">
+                        Explora las estadísticas detalladas de compras, tendencias de lectura y métricas de crecimiento 
+                        de nuestra librería. Descubre qué libros son los más populares y cómo evoluciona nuestra comunidad.
+                    </p>
+                    <a th:href="@{/compras/estadisticas}" class="btn btn-light btn-lg">
+                        <i class="bi bi-arrow-right-circle me-2"></i>Ver Estadísticas Completas
+                    </a>
+                </div>
+                <div class="col-lg-4 text-center">
+                    <i class="bi bi-graph-up-arrow" style="font-size: 8rem; opacity: 0.8;"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Botón flotante para estadísticas (solo en pantallas grandes) -->
+    <a th:href="@{/compras/estadisticas}" class="btn btn-warning btn-lg d-none d-lg-block floating-btn">
+        <i class="bi bi-bar-chart-line me-2"></i>Estadísticas
+    </a>
 
     <div th:replace="~{fragments/footer :: footer}"></div>
 

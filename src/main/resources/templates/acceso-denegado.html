@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Acceso Denegado - Bibliosfera</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .access-denied-card {
+            border: 3px solid #dc3545;
+            border-radius: 15px;
+        }
+        .lock-icon {
+            font-size: 5rem;
+            color: #dc3545;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 text-center">
+                <div class="card access-denied-card shadow-lg">
+                    <div class="card-header bg-danger text-white">
+                        <h3 class="mb-0">
+                            <i class="bi bi-shield-exclamation me-2"></i>Acceso Denegado
+                        </h3>
+                    </div>
+                    <div class="card-body py-5">
+                        <div class="mb-4">
+                            <i class="bi bi-lock lock-icon"></i>
+                        </div>
+                        
+                        <h4 class="text-danger mb-4">No tienes permiso para acceder a esta página</h4>
+                        
+                        <p class="text-muted mb-4">
+                            Esta sección está restringida solo para administradores del sistema. 
+                            Si necesitas acceso, contacta con un administrador.
+                        </p>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a th:href="@{/inicio}" class="btn btn-primary btn-lg">
+                                <i class="bi bi-house-door me-2"></i>Volver al Inicio
+                            </a>
+                            <!-- CORREGIDO: Usar sec:authorize en lugar de #authorization.expression -->
+                            <a sec:authorize="hasRole('ADMIN')" 
+                               th:href="@{/compras/estadisticas}" class="btn btn-success btn-lg">
+                                <i class="bi bi-bar-chart-line me-2"></i>Ver Estadísticas
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Información del usuario actual -->
+                <div class="mt-4 text-muted">
+                    <small>
+                        <i class="bi bi-person-circle me-1"></i>
+                        Usuario actual: 
+                        <span sec:authentication="name">Usuario no autenticado</span>
+                    </small>
+                    <br>
+                    <small>
+                        <i class="bi bi-shield me-1"></i>
+                        Rol: 
+                        <span sec:authentication="principal.authorities">Sin roles asignados</span>
+                    </small>
+                </div>
+                
+                <!-- Botón para probar con diferentes usuarios -->
+                <div class="mt-4">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Para acceder a esta página necesitas ser ADMIN. 
+                        <a th:href="@{/logout}" class="text-decoration-none">Cerrar sesión</a> 
+                        e iniciar con una cuenta de administrador.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
