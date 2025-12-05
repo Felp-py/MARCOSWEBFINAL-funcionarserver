@@ -1,4 +1,3 @@
-// DetalleVentaRepository.java
 package com.example.demo.repository;
 
 import com.example.demo.model.DetalleVenta;
@@ -21,7 +20,6 @@ public interface DetalleVentaRepository extends JpaRepository<DetalleVenta, Inte
            "ORDER BY totalVendido DESC")
     List<Object[]> findLibrosMasVendidos();
     
-    // Modificado para tu estructura de BD
     @Query("SELECT c.nombre, SUM(d.cantidad) as totalVendido, " +
            "(SUM(d.cantidad) * 100.0 / (SELECT SUM(d2.cantidad) FROM DetalleVenta d2)) as porcentaje " +
            "FROM DetalleVenta d " +

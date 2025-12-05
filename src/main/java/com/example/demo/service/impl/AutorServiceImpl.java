@@ -21,7 +21,7 @@ public class AutorServiceImpl implements AutorService {
     }
 
     @Override
-    public Optional<Autor> findById(Integer id) { // Mantener como Integer
+    public Optional<Autor> findById(Integer id) { 
         return autorRepository.findById(id);
     }
 
@@ -31,11 +31,10 @@ public class AutorServiceImpl implements AutorService {
     }
 
     @Override
-    public void deleteById(Integer id) { // Mantener como Integer
+    public void deleteById(Integer id) { 
         autorRepository.deleteById(id);
     }
     
-    // Método adicional para buscar por nombre
     @Override
     public Optional<Autor> findByNombre(String nombre) {
         return autorRepository.findByNombre(nombre);

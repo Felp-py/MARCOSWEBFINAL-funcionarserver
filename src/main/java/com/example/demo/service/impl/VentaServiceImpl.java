@@ -54,7 +54,6 @@ public class VentaServiceImpl implements VentaService {
                                 TipoEntrega tipoEntrega,
                                 BigDecimal totalCalculado) {
 
-        // 1. Crear y guardar la venta
         Venta nuevaVenta = new Venta();
         nuevaVenta.setCliente(cliente);
         nuevaVenta.setMetodoPago(metodoPago);
@@ -64,7 +63,6 @@ public class VentaServiceImpl implements VentaService {
 
         Venta ventaGuardada = ventaRepository.save(nuevaVenta);
 
-        // 2. Crear detalles de venta y actualizar stock
         for (ItemCarrito item : carrito) {
             Optional<Libro> libroOpt = libroRepository.findById(item.getIdLibro());
             
@@ -79,7 +77,6 @@ public class VentaServiceImpl implements VentaService {
                                            ". Stock disponible: " + libro.getStock());
             }
             
-            // Crear detalle de venta
             DetalleVenta detalle = new DetalleVenta();
             detalle.setVenta(ventaGuardada);
             detalle.setLibro(libro);
@@ -91,7 +88,6 @@ public class VentaServiceImpl implements VentaService {
             
             detalleVentaRepository.save(detalle);
             
-            // Actualizar stock
             libro.setStock(libro.getStock() - item.getCantidad());
             libroRepository.save(libro);
         }

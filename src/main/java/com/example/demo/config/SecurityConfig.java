@@ -20,29 +20,25 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService(UsuarioRepository usuarioRepository) {
         return username -> {
-            System.out.println("🟡 === INTENTO DE LOGIN ===");
+            System.out.println("=== INTENTO DE LOGIN ===");
             System.out.println("Usuario ingresado: '" + username + "'");
-            
-            // Listar TODOS los usuarios para debugging
+
             var todos = usuarioRepository.findAll();
             System.out.println("Total usuarios en BD: " + todos.size());
-            
-            // IMPORTANTE: Primero buscar por correo (porque se puede loguear con correo)
+
             Optional<com.example.demo.model.Usuario> usuarioOpt = usuarioRepository.findByCorreo(username);
             
-            // Si no encuentra por correo, buscar por nombre
             if (usuarioOpt.isEmpty()) {
                 usuarioOpt = usuarioRepository.findByNombre(username);
                 if (usuarioOpt.isPresent()) {
-                    System.out.println("✅ Encontrado por nombre: " + usuarioOpt.get().getNombre());
+                    System.out.println("Encontrado por nombre: " + usuarioOpt.get().getNombre());
                 }
             } else {
-                System.out.println("✅ Encontrado por correo: " + usuarioOpt.get().getCorreo());
+                System.out.println("Encontrado por correo: " + usuarioOpt.get().getCorreo());
             }
-            
-            // Si aún no encuentra, buscar en todos los usuarios (debug)
+
             if (usuarioOpt.isEmpty()) {
-                System.out.println("❌ NO ENCONTRADO. Usuarios disponibles:");
+                System.out.println("NO ENCONTRADO. Usuarios disponibles:");
                 todos.forEach(u -> {
                     System.out.println("   - Nombre: '" + u.getNombre() + 
                                      "', Correo: '" + u.getCorreo() + "'");
@@ -57,8 +53,7 @@ public class SecurityConfig {
             System.out.println("   Correo: " + usuario.getCorreo());
             System.out.println("   Rol asignado: " + rol);
             System.out.println("   Password (hash): " + usuario.getContrasena());
-            
-            // Asegurar que la contraseña no sea nula
+ 
             if (usuario.getContrasena() == null || usuario.getContrasena().isEmpty()) {
                 throw new UsernameNotFoundException("Contraseña no configurada para usuario: " + usuario.getNombre());
             }
@@ -88,7 +83,6 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
             .authorizeHttpRequests(auth -> auth
-                // Rutas PÚBLICAS (sin autenticación)
                 .requestMatchers(
                     "/", "/inicio", "/catalogo", "/nosotros",
                     "/login", "/registro/**", "/error",
@@ -96,24 +90,21 @@ public class SecurityConfig {
                     "/registro/api/**", "/api/consulta/**", "/dni/**", "/api/**",
                     "/acceso-denegado", "/carrito/**", "/checkout/**"
                 ).permitAll()
-                
-                // Rutas solo para ADMIN
+
                 .requestMatchers(
                     "/libros/**", 
                     "/admin/**",
-                    "/compras/estadisticas",  // SOLO ADMIN puede ver estadísticas
-                    "/compras/estadisticas/**" // También cualquier subruta
+                    "/compras/estadisticas",  
+                    "/compras/estadisticas/**" 
                 ).hasRole("ADMIN")
-                
-                // Rutas para ADMIN y USER (autenticados)
+
                 .requestMatchers(
                     "/perfil/**",
-                    "/compras/**",  // Pero NO estadisticas
+                    "/compras/**", 
                     "/checkout",
                     "/pago/**"
                 ).hasAnyRole("USER", "ADMIN")
-                
-                // Todo lo demás requiere autenticación
+    
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
@@ -131,7 +122,7 @@ public class SecurityConfig {
                 .permitAll()
             )
             .exceptionHandling(exception -> exception
-                .accessDeniedPage("/acceso-denegado") // Página personalizada para acceso denegado
+                .accessDeniedPage("/acceso-denegado") 
             )
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers(

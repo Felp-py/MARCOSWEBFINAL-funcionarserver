@@ -12,12 +12,10 @@ public interface LibroService {
     Libro save(Libro libro);
     void deleteById(Long id);
     
-    // Nuevos métodos para manejar stock
     boolean verificarStock(Long libroId, int cantidadRequerida);
     boolean actualizarStock(Long libroId, int cantidad);
     boolean verificarYActualizarStock(List<CarritoItem> itemsCarrito);
     
-    // Clase auxiliar para items del carrito
     class CarritoItem {
         private Long libroId;
         private String titulo;

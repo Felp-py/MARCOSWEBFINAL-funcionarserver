@@ -1,7 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.repository.*;
-import com.example.demo.model.Venta; // IMPORTANTE: Añade esta importación
+import com.example.demo.model.Venta; 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -16,10 +16,8 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.YearMonth;
 
 @Controller
 @RequestMapping("/compras")
@@ -40,7 +38,6 @@ public class EstadisticasController {
         System.out.println("=== CARGANDO ESTADÍSTICAS ACTUALIZADAS ===");
         
         try {
-            // 1. Estadísticas básicas - CONSULTA DIRECTA A BD
             long totalCompras = ventaRepository.count();
             System.out.println("Total compras en BD: " + totalCompras);
             
@@ -64,42 +61,34 @@ public class EstadisticasController {
             promedioCompra = promedioCompra.setScale(2, RoundingMode.HALF_UP);
             System.out.println("Promedio compra en BD: " + promedioCompra);
             
-            // 2. Datos para gráficos
             List<Object[]> librosMasVendidos = detalleVentaRepository.findLibrosMasVendidos();
             System.out.println("Libros más vendidos encontrados: " + librosMasVendidos.size());
             
             List<Object[]> distribucionCategorias = detalleVentaRepository.findDistribucionPorCategoria();
             System.out.println("Categorías encontradas: " + distribucionCategorias.size());
             
-            // 3. Datos adicionales para gráficos
             List<Object[]> ventasPorMes = ventaRepository.findVentasPorMes();
             System.out.println("Ventas por mes encontradas: " + ventasPorMes.size());
             
-            // 4. Ventas de los últimos 6 meses
             List<Object[]> ventasUltimos6Meses = ventaRepository.findVentasUltimos6Meses();
             System.out.println("Ventas últimos 6 meses: " + ventasUltimos6Meses.size());
             
-            // 5. Últimas ventas (para la tabla) - CORREGIDO
             List<Venta> ultimasVentas = ventaRepository.findUltimasVentas(
                 PageRequest.of(0, 5, Sort.by("fechaVenta").descending())
             );
             System.out.println("Últimas ventas encontradas: " + ultimasVentas.size());
             
-            // 6. Preparar nombres de meses para gráfico
             String[] nombresMeses = {"Ene", "Feb", "Mar", "Abr", "May", "Jun", 
                                      "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
             
-            // 7. Crear mapa de ventas por mes para el gráfico de línea
             Map<Integer, BigDecimal> ventasMensualesMap = new HashMap<>();
             for (Object[] venta : ventasUltimos6Meses) {
                 Integer mes = (Integer) venta[0];
                 Integer anio = (Integer) venta[1];
                 BigDecimal ingresos = (BigDecimal) venta[2];
-                // Usar una clave única mes-año
                 ventasMensualesMap.put(mes + anio * 100, ingresos);
             }
             
-            // 8. Agregar datos al modelo
             model.addAttribute("totalCompras", totalCompras);
             model.addAttribute("totalLibrosComprados", totalLibrosComprados);
             model.addAttribute("gastoTotal", gastoTotal);
@@ -118,7 +107,6 @@ public class EstadisticasController {
             System.err.println("Error cargando estadísticas: " + e.getMessage());
             e.printStackTrace();
             
-            // Datos por defecto en caso de error
             model.addAttribute("totalCompras", 0);
             model.addAttribute("totalLibrosComprados", 0);
             model.addAttribute("gastoTotal", BigDecimal.ZERO);
@@ -150,7 +138,6 @@ public String verEstadisticasSimple(Model model) {
      System.out.println("=== CARGANDO ESTADÍSTICAS ACTUALIZADAS ===");
         
         try {
-            // 1. Estadísticas básicas - CONSULTA DIRECTA A BD
             long totalCompras = ventaRepository.count();
             System.out.println("Total compras en BD: " + totalCompras);
             
@@ -174,42 +161,34 @@ public String verEstadisticasSimple(Model model) {
             promedioCompra = promedioCompra.setScale(2, RoundingMode.HALF_UP);
             System.out.println("Promedio compra en BD: " + promedioCompra);
             
-            // 2. Datos para gráficos
             List<Object[]> librosMasVendidos = detalleVentaRepository.findLibrosMasVendidos();
             System.out.println("Libros más vendidos encontrados: " + librosMasVendidos.size());
             
             List<Object[]> distribucionCategorias = detalleVentaRepository.findDistribucionPorCategoria();
             System.out.println("Categorías encontradas: " + distribucionCategorias.size());
             
-            // 3. Datos adicionales para gráficos
             List<Object[]> ventasPorMes = ventaRepository.findVentasPorMes();
             System.out.println("Ventas por mes encontradas: " + ventasPorMes.size());
             
-            // 4. Ventas de los últimos 6 meses
             List<Object[]> ventasUltimos6Meses = ventaRepository.findVentasUltimos6Meses();
             System.out.println("Ventas últimos 6 meses: " + ventasUltimos6Meses.size());
             
-            // 5. Últimas ventas (para la tabla) - CORREGIDO
             List<Venta> ultimasVentas = ventaRepository.findUltimasVentas(
                 PageRequest.of(0, 5, Sort.by("fechaVenta").descending())
             );
             System.out.println("Últimas ventas encontradas: " + ultimasVentas.size());
             
-            // 6. Preparar nombres de meses para gráfico
             String[] nombresMeses = {"Ene", "Feb", "Mar", "Abr", "May", "Jun", 
                                      "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
             
-            // 7. Crear mapa de ventas por mes para el gráfico de línea
             Map<Integer, BigDecimal> ventasMensualesMap = new HashMap<>();
             for (Object[] venta : ventasUltimos6Meses) {
                 Integer mes = (Integer) venta[0];
                 Integer anio = (Integer) venta[1];
                 BigDecimal ingresos = (BigDecimal) venta[2];
-                // Usar una clave única mes-año
                 ventasMensualesMap.put(mes + anio * 100, ingresos);
             }
             
-            // 8. Agregar datos al modelo
             model.addAttribute("totalCompras", totalCompras);
             model.addAttribute("totalLibrosComprados", totalLibrosComprados);
             model.addAttribute("gastoTotal", gastoTotal);
@@ -228,7 +207,6 @@ public String verEstadisticasSimple(Model model) {
             System.err.println("Error cargando estadísticas: " + e.getMessage());
             e.printStackTrace();
             
-            // Datos por defecto en caso de error
             model.addAttribute("totalCompras", 0);
             model.addAttribute("totalLibrosComprados", 0);
             model.addAttribute("gastoTotal", BigDecimal.ZERO);

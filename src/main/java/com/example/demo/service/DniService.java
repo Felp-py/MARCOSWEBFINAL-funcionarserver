@@ -26,9 +26,8 @@ public class DniService {
         System.out.println("DNI: " + dni);
         
         try {
-            // Validar formato de DNI
             if (dni == null || !dni.matches("\\d{8}")) {
-                System.err.println("❌ DNI inválido: debe tener 8 dígitos");
+                System.err.println("DNI inválido: debe tener 8 dígitos");
                 return null;
             }
             
@@ -36,35 +35,35 @@ public class DniService {
                     .uri("/v1/dni?numero=" + dni)
                     .retrieve()
                     .onStatus(status -> status.is4xxClientError(), clientResponse -> {
-                        System.err.println("❌ Error 4xx en la API");
+                        System.err.println("Error 4xx en la API");
                         return Mono.error(new RuntimeException("Error en la solicitud"));
                     })
                     .onStatus(status -> status.is5xxServerError(), clientResponse -> {
-                        System.err.println("❌ Error 5xx en la API");
+                        System.err.println("Error 5xx en la API");
                         return Mono.error(new RuntimeException("Error del servidor"));
                     })
                     .bodyToMono(DniResponse.class)
                     .block();
             
             if (response != null && response.getNombres() != null && !response.getNombres().isEmpty()) {
-                System.out.println("✅ Consulta exitosa");
+                System.out.println("Consulta exitosa");
                 System.out.println("   Nombre: " + response.getNombres());
                 System.out.println("   Apellido Paterno: " + response.getApellidoPaterno());
                 System.out.println("   Apellido Materno: " + response.getApellidoMaterno());
                 return response;
             } else {
-                System.err.println("⚠️ API respondió pero con datos vacíos");
+                System.err.println("API respondió pero con datos vacíos");
                 return null;
             }
             
         } catch (WebClientResponseException.NotFound e) {
-            System.err.println("❌ DNI no encontrado: " + dni);
+            System.err.println("DNI no encontrado: " + dni);
             return null;
         } catch (WebClientResponseException e) {
-            System.err.println("❌ Error HTTP " + e.getStatusCode() + ": " + e.getResponseBodyAsString());
+            System.err.println("Error HTTP " + e.getStatusCode() + ": " + e.getResponseBodyAsString());
             return null;
         } catch (Exception e) {
-            System.err.println("❌ Error general: " + e.getMessage());
+            System.err.println("Error general: " + e.getMessage());
             e.printStackTrace();
             return null;
         }

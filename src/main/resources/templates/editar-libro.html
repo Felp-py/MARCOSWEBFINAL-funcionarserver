@@ -11,7 +11,6 @@
 
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <!-- Solo visible para administradores -->
     <div sec:authorize="hasRole('ADMIN')">
         <div class="container my-5">
             <div class="row justify-content-center">
@@ -82,7 +81,6 @@
         </div>
     </div>
 
-    <!-- Mensaje si no es admin -->
     <div sec:authorize="!hasRole('ADMIN')">
         <div class="container my-5">
             <div class="row justify-content-center">

@@ -13,17 +13,15 @@ import java.util.Optional;
 
 public interface VentaService {
     
-    // Métodos CRUD básicos
     List<Venta> findAll();
     Optional<Venta> findById(Integer id);
     Venta save(Venta venta);
     void deleteById(Integer id);
     
-    // Método para procesar compra
     @Transactional
     Venta procesarCompra(List<ItemCarrito> carrito,
                          Cliente cliente,
-                         MetodoPago metodoPago,        // Ahora es MetodoPago (objeto)
-                         TipoEntrega tipoEntrega,      // Ahora es TipoEntrega (objeto)
+                         MetodoPago metodoPago,        
+                         TipoEntrega tipoEntrega,      
                          BigDecimal totalCalculado);
 }

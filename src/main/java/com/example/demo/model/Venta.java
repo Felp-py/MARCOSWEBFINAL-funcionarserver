@@ -32,12 +32,10 @@ public class Venta {
     @Column(name = "fecha_venta", nullable = false)
     private LocalDateTime fechaVenta;
     
-    // Constructor vacío
     public Venta() {
         this.fechaVenta = LocalDateTime.now();
     }
     
-    // Constructor con parámetros
     public Venta(Cliente cliente, MetodoPago metodoPago, TipoEntrega tipoEntrega, 
                 BigDecimal total, LocalDateTime fechaVenta) {
         this.cliente = cliente;
@@ -47,7 +45,6 @@ public class Venta {
         this.fechaVenta = fechaVenta != null ? fechaVenta : LocalDateTime.now();
     }
     
-    // Getters y Setters
     public Integer getIdVenta() {
         return idVenta;
     }
@@ -72,7 +69,6 @@ public class Venta {
         this.metodoPago = metodoPago;
     }
     
-    // Método conveniente para obtener el nombre del método de pago
     public String getMetodoPagoNombre() {
         return metodoPago != null ? metodoPago.getNombre() : "";
     }
@@ -85,7 +81,6 @@ public class Venta {
         this.tipoEntrega = tipoEntrega;
     }
     
-    // Método conveniente para obtener el nombre del tipo de entrega
     public String getTipoEntregaNombre() {
         return tipoEntrega != null ? tipoEntrega.getNombre() : "";
     }
@@ -106,7 +101,6 @@ public class Venta {
         this.fechaVenta = fechaVenta;
     }
     
-    // Métodos útiles
         public String getFechaVentaFormateada() {
         if (fechaVenta != null) {
             return fechaVenta.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));

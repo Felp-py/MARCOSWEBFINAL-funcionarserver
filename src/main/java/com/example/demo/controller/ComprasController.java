@@ -18,14 +18,11 @@ public class ComprasController {
     public ComprasController(VentaRepository ventaRepository) {
         this.ventaRepository = ventaRepository;
     }
-
-    // Inicializar carrito si no existe
     @ModelAttribute("carrito")
     public List<ItemCarrito> inicializarCarrito() {
         return new ArrayList<>();
     }
 
-    // Clase DTO interna para las compras
     public static class CompraDTO {
         private String fecha;
         private String libros;
@@ -41,7 +38,6 @@ public class ComprasController {
             this.completada = completada;
         }
         
-        // Getters y setters
         public String getFecha() { return fecha; }
         public void setFecha(String fecha) { this.fecha = fecha; }
         

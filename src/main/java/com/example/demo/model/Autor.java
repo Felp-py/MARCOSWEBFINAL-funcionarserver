@@ -21,10 +21,8 @@ public class Autor {
     @OneToMany(mappedBy = "autor", cascade = CascadeType.ALL)
     private List<Libro> libros = new ArrayList<>();
 
-    // Constructor vacío    
     public Autor() {}
 
-    // Constructor completo (si lo necesitas)
     public Autor(String nombre, String biografia) {
         this.nombre = nombre;
         this.biografia = biografia;

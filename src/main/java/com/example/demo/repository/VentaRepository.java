@@ -1,4 +1,3 @@
-// VentaRepository.java
 package com.example.demo.repository;
 
 import com.example.demo.model.Venta;
@@ -12,7 +11,6 @@ import java.util.List;
 @Repository
 public interface VentaRepository extends JpaRepository<Venta, Integer> {
     
-    // El método count() ya está heredado de JpaRepository
     
     @Query("SELECT COALESCE(SUM(v.total), 0) FROM Venta v")
     BigDecimal sumTotalVentas();
@@ -30,10 +28,6 @@ public interface VentaRepository extends JpaRepository<Venta, Integer> {
     @Query("SELECT v FROM Venta v ORDER BY v.fechaVenta DESC") 
     List<Venta> findUltimasVentas(Pageable pageable);
     
-    // Nuevo: Obtener ventas de los últimos 6 meses
-    // Nota: DATEADD puede variar según el motor de BD
-    // Para MySQL: DATE_SUB(CURRENT_DATE, INTERVAL 6 MONTH)
-    // Para H2/HSQLDB: DATEADD('MONTH', -6, CURRENT_DATE)
     @Query(value = "SELECT MONTH(v.fecha_venta) as mes, " +
            "YEAR(v.fecha_venta) as anio, " +
            "COALESCE(SUM(v.total), 0) as ingresos " +

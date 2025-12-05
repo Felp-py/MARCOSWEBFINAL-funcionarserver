@@ -53,37 +53,31 @@ public class RegistroController {
             System.out.println("Nombre: " + nombre);
             System.out.println("Apellido: " + apellido);
             
-            // 1. Generar nombre completo
             String nombreCompleto = nombre.trim() + " " + apellido.trim();
             
-            // 2. Generar un correo automático basado en el DNI
             String correo = generarCorreoDesdeDNI(dni, nombre, apellido);
             correo = hacerCorreoUnico(correo);
             
             System.out.println("Nombre completo: " + nombreCompleto);
             System.out.println("Correo generado: " + correo);
             
-            // 3. Validar que el correo no exista
             if (usuarioRepository.findByCorreo(correo).isPresent()) {
                 redirectAttributes.addFlashAttribute("error", "El DNI ya está registrado");
                 return "redirect:/registro";
             }
 
-            // 4. Hacer el nombre único si ya existe
             String nombreFinal = hacerNombreUnico(nombreCompleto);
             
-            // 5. Crear el usuario
             Usuario usuario = new Usuario();
             usuario.setNombre(nombreFinal);
-            usuario.setCorreo(correo);  // Usar setCorreo
-            usuario.setContrasena(passwordEncoder.encode(password));  // CORRECCIÓN: setContrasena
-            usuario.setIdRol(2); // 2 = CLIENTE
+            usuario.setCorreo(correo);  
+            usuario.setContrasena(passwordEncoder.encode(password));  
+            usuario.setIdRol(2); 
             
             System.out.println("Guardando usuario...");
             Usuario usuarioGuardado = usuarioRepository.save(usuario);
             System.out.println("Usuario guardado con ID: " + usuarioGuardado.getIdUsuario());
 
-            // 6. Crear el cliente asociado
             Cliente cliente = new Cliente();
             cliente.setIdUsuario(usuarioGuardado.getIdUsuario());
             cliente.setNombreCliente(nombreFinal);
@@ -110,23 +104,18 @@ public class RegistroController {
 
     private String generarCorreoDesdeDNI(String dni, String nombre, String apellido) {
         try {
-            // Tomar primer nombre y primer apellido
             String primerNombre = nombre.trim().split(" ")[0].toLowerCase();
             String primerApellido = apellido.trim().split(" ")[0].toLowerCase();
             
-            // Limpiar caracteres especiales
             primerNombre = primerNombre.replaceAll("[^a-z]", "");
             primerApellido = primerApellido.replaceAll("[^a-z]", "");
             
-            // Si está vacío, usar valores por defecto
             if (primerNombre.isEmpty()) primerNombre = "usuario";
             if (primerApellido.isEmpty()) primerApellido = "apellido";
             
-            // Crear correo: juan.perez.dni@bibliosfera.com
             return primerNombre + "." + primerApellido + "." + dni + "@bibliosfera.com";
             
         } catch (Exception e) {
-            // Si hay error, generar correo simple
             return "usuario." + dni + "@bibliosfera.com";
         }
     }
@@ -136,11 +125,9 @@ public class RegistroController {
         int contador = 1;
         
         while (usuarioRepository.findByCorreo(correo).isPresent()) {
-            // Cambiar el formato: usuario.perez.dni2@bibliosfera.com
             correo = correoBase.replace("@bibliosfera.com", contador + "@bibliosfera.com");
             contador++;
             
-            // Por seguridad, limitar intentos
             if (contador > 100) {
                 throw new RuntimeException("No se pudo generar un correo único");
             }
@@ -157,7 +144,6 @@ public class RegistroController {
             nombre = nombreBase + " " + contador;
             contador++;
             
-            // Por seguridad, limitar intentos
             if (contador > 100) {
                 throw new RuntimeException("No se pudo generar un nombre único");
             }
@@ -166,7 +152,6 @@ public class RegistroController {
         return nombre;
     }
     
-    // Endpoint para consultar DNI
     @GetMapping("/api/reniec/dni/{dni}")
     @ResponseBody
     public Map<String, Object> consultarDNI(@PathVariable String dni) {
@@ -175,7 +160,6 @@ public class RegistroController {
         
         Map<String, Object> response = new HashMap<>();
         
-        // Validar formato del DNI
         if (dni == null || !dni.matches("\\d{8}")) {
             response.put("success", false);
             response.put("message", "DNI inválido. Debe tener 8 dígitos numéricos.");
@@ -183,7 +167,6 @@ public class RegistroController {
         }
         
         try {
-            // Usar el DniService
             if (dniService != null) {
                 System.out.println("Usando DniService...");
                 DniResponse dniResponse = dniService.consultarDni(dni);
@@ -202,7 +185,6 @@ public class RegistroController {
                     response.put("message", "No se encontraron datos para el DNI");
                 }
             } 
-            // Datos de prueba
             else {
                 System.out.println("DniService no disponible, usando datos de prueba");
                 
@@ -234,7 +216,6 @@ public class RegistroController {
             System.err.println("Error en consulta DNI: " + e.getMessage());
             e.printStackTrace();
             
-            // En caso de error, devolver datos de prueba
             response.put("success", true);
             response.put("nombres", "PRUEBA POR ERROR");
             response.put("apellidoPaterno", "APELLIDO P");

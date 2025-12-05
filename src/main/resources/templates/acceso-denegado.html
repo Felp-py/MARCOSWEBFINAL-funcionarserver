@@ -47,7 +47,6 @@
                             <a th:href="@{/inicio}" class="btn btn-primary btn-lg">
                                 <i class="bi bi-house-door me-2"></i>Volver al Inicio
                             </a>
-                            <!-- CORREGIDO: Usar sec:authorize en lugar de #authorization.expression -->
                             <a sec:authorize="hasRole('ADMIN')" 
                                th:href="@{/compras/estadisticas}" class="btn btn-success btn-lg">
                                 <i class="bi bi-bar-chart-line me-2"></i>Ver Estadísticas
@@ -56,7 +55,6 @@
                     </div>
                 </div>
                 
-                <!-- Información del usuario actual -->
                 <div class="mt-4 text-muted">
                     <small>
                         <i class="bi bi-person-circle me-1"></i>
@@ -71,7 +69,6 @@
                     </small>
                 </div>
                 
-                <!-- Botón para probar con diferentes usuarios -->
                 <div class="mt-4">
                     <small class="text-muted">
                         <i class="bi bi-info-circle me-1"></i>

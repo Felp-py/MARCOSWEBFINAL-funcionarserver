@@ -13,9 +13,7 @@ public class CurrencyService {
         if ("PEN".equals(toCurrency)) {
             return BigDecimal.ONE;
         }
-        
-        // Para desarrollo, usa tasa fija
-        // En producción, aquí harías la llamada a la API
+
         return TASA_DEFAULT;
     }
     

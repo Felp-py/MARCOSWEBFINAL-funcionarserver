@@ -43,7 +43,6 @@
             padding: 2px 6px;
             margin-left: 5px;
         }
-        /* Estilos para el modal */
         .modal-img-container {
             max-height: 400px;
             overflow: hidden;
@@ -74,7 +73,6 @@
     </div>
 </header>
 
-<!-- Botón flotante de Administración (solo para admin) -->
 <div sec:authorize="hasRole('ADMIN')" class="admin-button-container">
     <a th:href="@{/admin/lista-libros}" class="btn btn-warning btn-lg shadow-lg rounded-pill admin-button d-flex align-items-center">
         <i class="bi bi-gear-fill me-2"></i> Administrar Stock
@@ -97,7 +95,6 @@
         <div class="list-row list-group-item list-group-item-action"
              th:each="libro : ${libros}">
 
-            <!-- Imagen -->
             <div class="col-md-1 col-3 text-center">
                 <img th:src="@{${libro.imagenUrl}}"
                      class="img-fluid rounded list-img"
@@ -105,7 +102,6 @@
                      onerror="this.onerror=null; this.src='https://via.placeholder.com/50x75?text=Sin+imagen';">
             </div>
 
-            <!-- Título y detalles -->
             <div class="col-md-5 col-9 d-flex flex-column justify-content-center">
                 <strong th:text="${libro.titulo}">Título del Libro</strong>
                 <small class="text-muted" th:if="${libro.autor != null}">
@@ -125,7 +121,6 @@
                 </div>
             </div>
 
-            <!-- Precio (solo desktop) -->
             <div class="col-md-2 d-none d-md-flex align-items-center justify-content-center">
                 <strong class="text-success" 
                         th:text="'S/ ' + ${#numbers.formatDecimal(libro.precio, 1, 'COMMA', 2, 'POINT')}">
@@ -133,7 +128,6 @@
                 </strong>
             </div>
 
-            <!-- Stock (solo desktop) -->
             <div class="col-md-2 d-none d-md-flex align-items-center justify-content-center">
                 <span th:if="${libro.stock > 10}" 
                       class="badge bg-success"
@@ -149,10 +143,8 @@
                 </span>
             </div>
 
-            <!-- Botones -->
             <div class="col-md-2 col-12 mt-2 mt-md-0 d-grid gap-2 d-md-flex justify-content-md-end">
 
-                <!-- Agregar al carrito (solo si hay stock) -->
                 <div th:if="${libro.stock > 0}">
                     <form th:action="@{/carrito/agregar}" method="post" class="d-grid d-md-inline-block">
                         <input type="hidden" name="idLibro" th:value="${libro.idLibro}"/>
@@ -168,7 +160,6 @@
                     </button>
                 </div>
 
-                <!-- Ver más -->
                 <button class="btn btn-primary btn-sm ver-mas"
                         th:data-id="${libro.idLibro}"
                         th:data-title="${libro.titulo}"
@@ -189,7 +180,6 @@
         </div>
     </div>
 
-    <!-- Mensaje si no hay libros -->
     <div th:if="${libros.isEmpty()}" class="text-center py-5">
         <div class="alert alert-info">
             <i class="bi bi-info-circle me-2"></i>
@@ -197,7 +187,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE DETALLES -->
     <div class="modal fade" id="libroModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
@@ -247,11 +236,9 @@
                     </div>
                 </div>
 
-                <!-- CORRECCIÓN: Eliminar la línea 242 problemática -->
                 <div class="modal-footer d-flex justify-content-between">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     <div id="modalAddToCart">
-                        <!-- El formulario se agregará dinámicamente -->
                     </div>
                 </div>
             </div>
@@ -267,7 +254,6 @@
 
         botones.forEach(boton => {
             boton.addEventListener("click", () => {
-                // Obtener datos del botón
                 const titulo = boton.dataset.title;
                 const autor = boton.dataset.author;
                 const categoria = boton.dataset.categoria;
@@ -277,11 +263,10 @@
                 const stock = boton.dataset.stock;
                 const fecha = boton.dataset.fecha;
                 const img = boton.dataset.img;
-                const libroId = boton.dataset.id; // Obtener ID del data attribute
+                const libroId = boton.dataset.id; 
 
-                console.log("Libro ID:", libroId); // Para debugging
+                console.log("Libro ID:", libroId); 
 
-                // Actualizar contenido del modal
                 document.getElementById("modalTitle").textContent = titulo;
                 document.getElementById("modalAuthor").textContent = autor;
                 document.getElementById("modalCategory").textContent = categoria;
@@ -290,7 +275,6 @@
                 document.getElementById("modalPrice").textContent = precio;
                 document.getElementById("modalFecha").textContent = fecha;
                 
-                // Manejar imagen
                 const imgElement = document.getElementById("modalImg");
                 if (img && img.trim() !== '') {
                     imgElement.src = img;
@@ -298,7 +282,6 @@
                     imgElement.src = 'https://via.placeholder.com/300x400?text=Sin+imagen';
                 }
                 
-                // Manejar stock
                 const stockElement = document.getElementById("modalStock");
                 const stockNum = parseInt(stock);
                 
@@ -313,7 +296,6 @@
                     stockElement.className = 'fw-bold text-danger';
                 }
                 
-                // Manejar botón de añadir al carrito
                 if (modalAddToCart) {
                     modalAddToCart.innerHTML = '';
                     
@@ -323,7 +305,6 @@
                         form.method = 'post';
                         form.className = 'd-inline';
                         
-                        // Agregar CSRF token si estás usando Spring Security
                         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
                         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
                         
@@ -350,11 +331,9 @@
                         button.className = 'btn btn-success btn-lg';
                         button.innerHTML = '<i class="bi bi-cart-plus me-2"></i>Añadir al carrito';
                         
-                        // Añadir evento para mostrar confirmación
                         button.addEventListener('click', function(e) {
                             console.log("Añadiendo libro ID:", libroId, "al carrito");
-                            // Opcional: Mostrar mensaje de confirmación
-                            // alert(`"${titulo}" ha sido añadido al carrito`);
+
                         });
                         
                         form.appendChild(inputId);
@@ -373,7 +352,6 @@
             });
         });
         
-        // Limpiar modal cuando se cierre
         const modal = document.getElementById('libroModal');
         if (modal) {
             modal.addEventListener('hidden.bs.modal', function () {
@@ -395,7 +373,6 @@
     });
 </script>
 
-<!-- Notificación flotante para agregar al carrito -->
 <div id="cartNotification" class="position-fixed top-0 end-0 m-4 p-3 bg-success text-white rounded shadow-lg" 
      style="z-index: 1050; display: none; transition: all 0.3s ease;">
     <i class="bi bi-check-circle-fill me-2"></i>
@@ -403,7 +380,6 @@
 </div>
 
 <script>
-    // Función para mostrar notificación
     function showNotification(message) {
         const notification = document.getElementById('cartNotification');
         const messageSpan = document.getElementById('notificationMessage');
@@ -411,25 +387,21 @@
         messageSpan.textContent = message;
         notification.style.display = 'block';
         
-        // Ocultar después de 3 segundos
         setTimeout(() => {
             notification.style.display = 'none';
         }, 3000);
     }
     
-    // Escuchar eventos de formularios de carrito
     document.addEventListener('submit', function(e) {
         if (e.target.action && e.target.action.includes('/carrito/agregar')) {
-            e.preventDefault(); // Prevenir envío inmediato para mostrar notificación
+            e.preventDefault(); 
             
             const form = e.target;
             const libroId = form.querySelector('input[name="idLibro"]').value;
             const libroTitulo = form.closest('.list-row')?.querySelector('strong')?.textContent || 'el libro';
             
-            // Mostrar notificación
             showNotification(`¡${libroTitulo} añadido al carrito!`);
             
-            // Enviar formulario después de 1 segundo
             setTimeout(() => {
                 form.submit();
             }, 1000);

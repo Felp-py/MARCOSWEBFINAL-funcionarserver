@@ -21,10 +21,8 @@ public class Editorial {
     @OneToMany(mappedBy = "editorial", cascade = CascadeType.ALL)
     private List<Libro> libros = new ArrayList<>();
 
-    // Constructor vacío
     public Editorial() {}
 
-    // Constructor completo
     public Editorial(String nombre, String descripcion) {
         this.nombre = nombre;
         this.descripcion = descripcion;

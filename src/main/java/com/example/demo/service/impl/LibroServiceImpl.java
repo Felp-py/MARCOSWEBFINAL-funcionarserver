@@ -60,7 +60,6 @@ public class LibroServiceImpl implements LibroService {
     @Transactional
     public boolean actualizarStock(Long libroId, int cantidad) {
         try {
-            // Usar la consulta personalizada para actualización atómica
             int filasActualizadas = libroRepository.actualizarStock(libroId, cantidad);
             return filasActualizadas > 0;
         } catch (Exception e) {

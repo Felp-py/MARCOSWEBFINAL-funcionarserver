@@ -63,7 +63,6 @@
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
     <div class="container py-4">
-        <!-- Header -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="bg-light p-4 rounded shadow-sm">
@@ -78,7 +77,6 @@
             </div>
         </div>
 
-        <!-- Mensajes -->
         <div th:if="${param.error != null}" class="alert alert-warning alert-dismissible fade show">
             <i class="bi bi-exclamation-triangle me-2"></i>
             <span th:if="${param.error == 'stock_insuficiente'}">
@@ -90,7 +88,6 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- Carrito vacío -->
         <div th:if="${carrito == null or carrito.empty}" class="text-center py-5">
             <div class="mb-4">
                 <i class="bi bi-cart-x text-muted" style="font-size: 4rem;"></i>
@@ -102,11 +99,8 @@
             </a>
         </div>
 
-        <!-- Carrito con items -->
         <div th:unless="${carrito == null or carrito.empty}" class="row">
-            <!-- Lista de items -->
             <div class="col-lg-8 mb-4">
-                <!-- Artículos en el Carrito -->
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">
@@ -130,7 +124,6 @@
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <div class="flex-shrink-0 me-3">
-                                                    <!-- CORREGIDO: Usar imagenUrl del ItemCarrito -->
                                                     <img th:if="${item.imagenUrl != null}" 
                                                          th:src="@{${item.imagenUrl}}" 
                                                          class="libro-imagen rounded shadow-sm"
@@ -195,7 +188,6 @@
                     </div>
                 </div>
                 
-                <!-- Acciones del carrito -->
                 <div class="d-flex justify-content-between">
                     <a th:href="@{/catalogo}" class="btn btn-outline-primary">
                         <i class="bi bi-arrow-left me-2"></i>Seguir comprando
@@ -210,7 +202,6 @@
                 </div>
             </div>
 
-            <!-- Resumen del pedido (LATERAL) -->
             <div class="col-lg-4">
                 <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
                     <div class="card-header bg-success text-white">
@@ -219,7 +210,6 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <!-- Tabla de resumen -->
                         <table class="summary-table mb-4">
                             <tr>
                                 <td>Subtotal:</td>
@@ -228,7 +218,6 @@
                             <tr>
                                 <td>Envío:</td>
                                 <td class="text-end">
-                                    <!-- CORREGIDO: Verificar si envio es nulo -->
                                     <span th:if="${envio != null and envio.compareTo(0) == 0}" class="text-success fw-bold">GRATIS</span>
                                     <span th:if="${envio != null and envio.compareTo(0) > 0}" class="text-end">
                                         S/ <span th:text="${#numbers.formatDecimal(envio, 1, 'COMMA', 2, 'POINT')}"></span>
@@ -246,7 +235,6 @@
                             </tr>
                         </table>
 
-                        <!-- Moneda de Pago -->
                         <div class="mb-4">
                             <h6 class="fw-bold mb-2">Moneda de Pago</h6>
                             <table class="currency-table">
@@ -260,7 +248,6 @@
                             </small>
                         </div>
 
-                        <!-- Producto individual (solo si hay 1 item) -->
                         <div th:if="${carrito.size() == 1}" class="mb-4">
                             <h6 class="fw-bold mb-2">Producto</h6>
                             <div class="d-flex justify-content-between small">
@@ -270,14 +257,12 @@
                             </div>
                         </div>
 
-                        <!-- Botón Continuar al Checkout -->
                         <div class="d-grid mb-3">
                             <a th:href="@{/carrito/checkout}" class="btn btn-primary btn-lg">
                                 <i class="bi bi-credit-card me-2"></i>Continuar al Pago
                             </a>
                         </div>
 
-                        <!-- Información de pago segura -->
                         <div class="payment-info">
                             <p class="mb-2 text-center">
                                 <i class="bi bi-shield-check text-success me-1"></i>
@@ -302,9 +287,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Confirmaciones para acciones destructivas
         document.addEventListener('DOMContentLoaded', function() {
-            // Confirmar vaciar carrito
             const vaciarForms = document.querySelectorAll('form[action*="/carrito/vaciar"]');
             vaciarForms.forEach(form => {
                 form.addEventListener('submit', function(e) {
@@ -314,7 +297,6 @@
                 });
             });
             
-            // Confirmar eliminar item
             const eliminarForms = document.querySelectorAll('form[action*="/carrito/eliminar"]');
             eliminarForms.forEach(form => {
                 form.addEventListener('submit', function(e) {

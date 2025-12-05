@@ -8,21 +8,20 @@ public class Carrito {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_carrito")
-    private Long idCarrito;  // Usar Long
+    private Long idCarrito;  
     
     @ManyToOne
     @JoinColumn(name = "id_cliente", nullable = false)
-    private Cliente cliente;  // Esto ahora será Long
+    private Cliente cliente;  
     
     @ManyToOne
     @JoinColumn(name = "id_libro", nullable = false)
-    private Libro libro;  // Esto es Long
+    private Libro libro;  
     
     private Integer cantidad;
 
     public Carrito() {}
 
-    // Getters y setters...
      public Long getIdCarrito() { return idCarrito; }
     public void setIdCarrito(Long idCarrito) { this.idCarrito = idCarrito; }
 

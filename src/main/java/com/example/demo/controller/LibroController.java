@@ -31,13 +31,11 @@ public class LibroController {
         this.editorialService = editorialService;
     }
 
-    // Mostrar formulario para nuevo libro (solo admin)
     @GetMapping("/nuevo")
     public String mostrarFormularioNuevoLibro() {
         return "nuevo-libro";
     }
 
-    // Guardar nuevo libro
     @PostMapping("/guardar")
     @Transactional
     public String guardarLibro(
@@ -49,7 +47,6 @@ public class LibroController {
             @RequestParam Integer stock) {
         
         try {
-            // Buscar o crear autor
             Autor autorObj = autorService.findByNombre(autor)
                     .orElseGet(() -> {
                         Autor nuevoAutor = new Autor();
@@ -57,7 +54,6 @@ public class LibroController {
                         return autorService.save(nuevoAutor);
                     });
             
-            // Buscar o crear categoría
             Categoria categoriaObj = categoriaService.findByNombre(categoria)
                     .orElseGet(() -> {
                         Categoria nuevaCategoria = new Categoria();
@@ -65,7 +61,6 @@ public class LibroController {
                         return categoriaService.save(nuevaCategoria);
                     });
             
-            // Buscar o crear editorial
             Editorial editorialObj = editorialService.findByNombre(editorial)
                     .orElseGet(() -> {
                         Editorial nuevaEditorial = new Editorial();
@@ -73,7 +68,6 @@ public class LibroController {
                         return editorialService.save(nuevaEditorial);
                     });
             
-            // Crear y guardar libro
             Libro libro = new Libro();
             libro.setTitulo(titulo);
             libro.setAutor(autorObj);
@@ -92,9 +86,8 @@ public class LibroController {
         }
     }
 
-    // Mostrar formulario para editar libro
     @GetMapping("/editar/{id}")
-    public String mostrarFormularioEditarLibro(@PathVariable Long id, Model model) { // Cambiado a Long
+    public String mostrarFormularioEditarLibro(@PathVariable Long id, Model model) { 
         Optional<Libro> libroOpt = libroRepository.findById(id);
         
         if (libroOpt.isPresent()) {
@@ -105,11 +98,10 @@ public class LibroController {
         return "redirect:/admin/lista-libros?error=notfound";
     }
 
-    // Actualizar libro
     @PostMapping("/actualizar/{id}")
     @Transactional
     public String actualizarLibro(
-            @PathVariable Long id, // Cambiado a Long
+            @PathVariable Long id, 
             @RequestParam String titulo,
             @RequestParam String autor,
             @RequestParam String categoria,
@@ -122,12 +114,10 @@ public class LibroController {
         if (libroOpt.isPresent()) {
             Libro libro = libroOpt.get();
             
-            // Actualizar campos básicos
             libro.setTitulo(titulo);
             libro.setPrecio(precio);
             libro.setStock(stock != null ? stock : 0);
             
-            // Actualizar o crear autor
             Autor autorObj = autorService.findByNombre(autor)
                     .orElseGet(() -> {
                         Autor nuevoAutor = new Autor();
@@ -136,7 +126,6 @@ public class LibroController {
                     });
             libro.setAutor(autorObj);
             
-            // Actualizar o crear categoría
             Categoria categoriaObj = categoriaService.findByNombre(categoria)
                     .orElseGet(() -> {
                         Categoria nuevaCategoria = new Categoria();
@@ -145,7 +134,6 @@ public class LibroController {
                     });
             libro.setCategoria(categoriaObj);
             
-            // Actualizar o crear editorial
             Editorial editorialObj = editorialService.findByNombre(editorial)
                     .orElseGet(() -> {
                         Editorial nuevaEditorial = new Editorial();
@@ -162,14 +150,12 @@ public class LibroController {
         return "redirect:/admin/lista-libros?error=notfound";
     }
 
-    // Eliminar libro
     @GetMapping("/eliminar/{id}")
-    public String eliminarLibro(@PathVariable Long id) { // Cambiado a Long
+    public String eliminarLibro(@PathVariable Long id) { 
         libroRepository.deleteById(id);
         return "redirect:/admin/lista-libros?success=deleted";
     }
 
-    // Lista simple de libros (alternativa)
     @GetMapping("/lista")
     public String listaLibros(Model model) {
         List<Libro> libros = libroRepository.findAll();

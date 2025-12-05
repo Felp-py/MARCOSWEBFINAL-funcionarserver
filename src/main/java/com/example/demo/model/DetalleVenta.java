@@ -9,7 +9,7 @@ public class DetalleVenta {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_detalle_venta")  // IMPORTANTE: Coincide con BD
+    @Column(name = "id_detalle_venta")  
     private Integer idDetalleVenta;
     
     @ManyToOne
@@ -26,13 +26,11 @@ public class DetalleVenta {
     @Column(name = "precio_unitario")
     private BigDecimal precioUnitario;
     
-    @Column(name = "subtotal")  // ¡AGREGA ESTE CAMPO!
+    @Column(name = "subtotal")  
     private BigDecimal subtotal;
     
-    // Constructor vacío
     public DetalleVenta() {}
     
-    // Constructor con parámetros
     public DetalleVenta(Venta venta, Libro libro, Integer cantidad, 
                        BigDecimal precioUnitario, BigDecimal subtotal) {
         this.venta = venta;
@@ -42,7 +40,6 @@ public class DetalleVenta {
         this.subtotal = subtotal;
     }
     
-    // Getters y Setters COMPLETOS
     public Integer getIdDetalleVenta() { 
         return idDetalleVenta; 
     }
@@ -83,15 +80,14 @@ public class DetalleVenta {
         this.precioUnitario = precioUnitario; 
     }
     
-    public BigDecimal getSubtotal() {  // ¡AGREGA ESTE GETTER!
+    public BigDecimal getSubtotal() { 
         return subtotal; 
     }
     
-    public void setSubtotal(BigDecimal subtotal) {  // ¡AGREGA ESTE SETTER!
+    public void setSubtotal(BigDecimal subtotal) { 
         this.subtotal = subtotal; 
     }
     
-    // Método para calcular subtotal automáticamente
     @Transient
     public BigDecimal calcularSubtotal() {
         if (precioUnitario != null && cantidad != null) {

@@ -27,7 +27,6 @@ public class TipoEntrega {
     @OneToMany(mappedBy = "tipoEntrega")
     private List<Venta> ventas = new ArrayList<>();
     
-    // Constructor
     public TipoEntrega() {}
     
     public TipoEntrega(String nombre, String descripcion, BigDecimal costo) {
@@ -36,7 +35,6 @@ public class TipoEntrega {
         this.costo = costo;
     }
     
-    // Getters y Setters
     public Integer getIdTipoEntrega() {
         return idTipoEntrega;
     }

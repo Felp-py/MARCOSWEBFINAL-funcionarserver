@@ -21,10 +21,8 @@ public class Categoria {
     @OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL)
     private List<Libro> libros = new ArrayList<>();
 
-    // Constructor vacío
     public Categoria() {}
 
-    // Constructor completo
     public Categoria(String nombre, String descripcion) {
         this.nombre = nombre;
         this.descripcion = descripcion;

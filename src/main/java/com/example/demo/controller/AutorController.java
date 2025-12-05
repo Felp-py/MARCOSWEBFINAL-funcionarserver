@@ -20,7 +20,7 @@ public class AutorController {
     public String listar(Model model) {
         model.addAttribute("autores", autorService.findAll());
         model.addAttribute("nuevoAutor", new Autor());
-        return "autores"; // nombre del template Thymeleaf
+        return "autores"; 
     }
 
     @PostMapping("/agregar")
@@ -39,7 +39,7 @@ public class AutorController {
     public String editar(@PathVariable Integer id, Model model) {
         Autor autor = autorService.findById(id).orElseThrow(() -> new IllegalArgumentException("Autor no encontrado"));
         model.addAttribute("autor", autor);
-        return "editarAutor"; // plantilla para editar
+        return "editarAutor"; 
     }
 
     @PostMapping("/actualizar/{id}")

@@ -17,11 +17,10 @@ public class DniController {
     
     @GetMapping("/consultar")
     public String mostrarFormulario(Model model) {
-        // Inicializar valores por defecto
         if (!model.containsAttribute("dni")) {
             model.addAttribute("dni", "");
         }
-        return "consultar-dni"; // Nombre del archivo HTML
+        return "consultar-dni"; 
     }
     
     @PostMapping("/consultar")
@@ -31,7 +30,6 @@ public class DniController {
         
         dni = dni.trim();
         
-        // Validación simple
         if (dni.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Por favor ingrese un DNI");
             redirectAttributes.addFlashAttribute("dni", dni);
@@ -64,7 +62,6 @@ public class DniController {
         return "redirect:/dni/consultar";
     }
     
-    // Endpoint para API (AJAX/JavaScript)
     @GetMapping("/api")
     @ResponseBody
     public DniResponse consultarDniApi(@RequestParam String numero) {

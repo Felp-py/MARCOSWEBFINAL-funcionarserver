@@ -20,12 +20,9 @@ public class CarritoController {
 
     private final LibroRepository libroRepository;
     
-    // Constantes para cálculos
     private static final BigDecimal TASA_IMPUESTOS = new BigDecimal("0.18"); // 18% IGV
     private static final BigDecimal COSTO_ENVIO_DOMICILIO = new BigDecimal("10.00");
     private static final BigDecimal ENVIO_GRATIS = BigDecimal.ZERO;
-    
-    // Tasa de cambio predeterminada
     private static final BigDecimal TASA_CAMBIO_DEFAULT = new BigDecimal("3.850");
 
     public CarritoController(LibroRepository libroRepository) {
@@ -42,7 +39,6 @@ public class CarritoController {
         return TASA_CAMBIO_DEFAULT;
     }
 
-    // Página principal del carrito
     @GetMapping
     public String verCarrito(@ModelAttribute("carrito") List<ItemCarrito> carrito,
                             @ModelAttribute("tipoCambio") BigDecimal tipoCambio,
@@ -53,7 +49,6 @@ public class CarritoController {
         return "carrito";
     }
 
-    // Agregar al carrito
     @PostMapping("/agregar")
     public String agregarAlCarrito(@RequestParam Long idLibro,
                                    @RequestParam(defaultValue = "1") int cantidad,
@@ -63,40 +58,33 @@ public class CarritoController {
 
         if (libroOpt.isPresent() && cantidad > 0) {
             Libro libro = libroOpt.get();
-            
-            // Verificar stock
+
             if (libro.getStock() != null && libro.getStock() < cantidad) {
                 return "redirect:/carrito?error=stock_insuficiente";
             }
-            
-            // Obtener imagen del libro
+
             String imagenUrl = libro.getImagenUrl();
             if (imagenUrl == null || imagenUrl.trim().isEmpty()) {
                 imagenUrl = "/img/libros/default.jpg";
             }
-            
-            // Buscar si ya existe en el carrito
+
             Optional<ItemCarrito> itemExistente = carrito.stream()
                     .filter(item -> item.getIdLibro().equals(idLibro))
                     .findFirst();
 
             if (itemExistente.isPresent()) {
-                // Actualizar cantidad
                 ItemCarrito item = itemExistente.get();
                 int nuevaCantidad = item.getCantidad() + cantidad;
-                
-                // Verificar stock total
                 if (libro.getStock() == null || nuevaCantidad <= libro.getStock()) {
                     item.setCantidad(nuevaCantidad);
                 }
             } else {
-                // Crear nuevo item CON IMAGEN
                 ItemCarrito nuevoItem = new ItemCarrito(
                     libro.getIdLibro(),
                     libro.getTitulo(),
                     libro.getPrecio(),
                     cantidad,
-                    imagenUrl  // Pasar la imagen del libro
+                    imagenUrl 
                 );
                 carrito.add(nuevoItem);
             }
@@ -156,7 +144,6 @@ public class CarritoController {
     private void calcularTotales(List<ItemCarrito> carrito, 
                                 BigDecimal tipoCambio,
                                 Model model) {
-        // Subtotal
         BigDecimal subtotal = BigDecimal.ZERO;
         if (carrito != null && !carrito.isEmpty()) {
             subtotal = carrito.stream()
@@ -165,21 +152,15 @@ public class CarritoController {
                     .setScale(2, RoundingMode.HALF_UP);
         }
         
-        // Envío - EN CARRITO ES SIEMPRE GRATIS
         BigDecimal envio = ENVIO_GRATIS;
-        
-        // Impuestos (18% sobre el subtotal)
+
         BigDecimal impuestos = subtotal.multiply(TASA_IMPUESTOS)
                 .setScale(2, RoundingMode.HALF_UP);
-        
-        // Total
         BigDecimal total = subtotal.add(envio).add(impuestos)
                 .setScale(2, RoundingMode.HALF_UP);
-        
-        // Calcular total en USD (para conversión)
+
         BigDecimal totalEnUsd = total.divide(tipoCambio, 2, RoundingMode.HALF_UP);
-        
-        // Agregar todos los valores al modelo
+
         model.addAttribute("subtotal", subtotal);
         model.addAttribute("envio", envio);
         model.addAttribute("impuestos", impuestos);
@@ -189,15 +170,13 @@ public class CarritoController {
         model.addAttribute("carrito", carrito);
     }
     
-    // Continuar al checkout
     @GetMapping("/checkout")
     public String continuarAlCheckout(@ModelAttribute("carrito") List<ItemCarrito> carrito,
                                       Model model) {
         if (carrito == null || carrito.isEmpty()) {
             return "redirect:/carrito?error=carrito_vacio";
         }
-        
-        // Redirigir al checkout controller
+
         return "redirect:/checkout";
     }
 }

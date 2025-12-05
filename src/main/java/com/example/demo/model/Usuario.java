@@ -27,25 +27,16 @@ public class Usuario {
     @Column(name = "id_rol")
     private Integer idRol;
 
-    // IMPORTANTE: Temporalmente comenta esta relación
-    // @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL)
-    // private Cliente cliente;
-
-    // Constructor vacío - NO inicialices fechaRegistro aquí
     public Usuario() {
-        // Deja que la BD asigne el valor por defecto
     }
 
-    // Constructor para registro
     public Usuario(String nombre, String correo, String contrasena, Integer idRol) {
         this.nombre = nombre;
         this.correo = correo;
         this.contrasena = contrasena;
         this.idRol = idRol;
-        // No asignes fechaRegistro, la BD lo hará
     }
 
-    // Getters y Setters
     public Integer getIdUsuario() { return idUsuario; }
     public void setIdUsuario(Integer idUsuario) { this.idUsuario = idUsuario; }
 
@@ -65,9 +56,6 @@ public class Usuario {
     public void setIdRol(Integer idRol) { this.idRol = idRol; }
 
 
-    //public Cliente getCliente() { return cliente; }
-    //public void setCliente(Cliente cliente) { this.cliente = cliente; }
-    
     @Transient
     public String getPassword() {
         return this.contrasena;

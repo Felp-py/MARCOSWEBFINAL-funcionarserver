@@ -26,8 +26,8 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
-    public Usuario obtenerPorCorreo(String correo) {  // ← Corregido: usar parámetro 'correo'
-        return repo.findByCorreo(correo).orElse(null);  // ← Corregido: pasar 'correo'
+    public Usuario obtenerPorCorreo(String correo) {  
+        return repo.findByCorreo(correo).orElse(null);  
     }
 
     @Override

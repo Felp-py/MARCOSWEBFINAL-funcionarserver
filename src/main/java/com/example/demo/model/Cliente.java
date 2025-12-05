@@ -34,12 +34,9 @@ public class Cliente {
     @JoinColumn(name = "id_usuario", insertable = false, updatable = false)
     private Usuario usuario;
 
-    // Constructor vacío - NO asignar fechaRegistro aquí
     public Cliente() {
-        // La BD asignará automáticamente la fecha por DEFAULT CURRENT_TIMESTAMP
     }
 
-    // Constructor para registro
     public Cliente(Integer idUsuario, String nombreCliente, String direccion, 
                    String telefono, String correoCliente) {
         this.idUsuario = idUsuario;
@@ -49,7 +46,6 @@ public class Cliente {
         this.correoCliente = correoCliente;
     }
 
-    // Getters y Setters
     public Long getIdCliente() { return idCliente; }
     public void setIdCliente(Long idCliente) { this.idCliente = idCliente; }    
 

@@ -21,7 +21,7 @@ public class AdminController {
 
     @GetMapping("/lista-libros")
     public String mostrarListaLibrosAdmin(Model model) {
-        List<Libro> libros = libroRepository.findAll(); // Solo usa findAll()
+        List<Libro> libros = libroRepository.findAll(); 
         
         System.out.println("=== DEBUG: Mostrando lista de libros ===");
         System.out.println("Total libros encontrados: " + libros.size());

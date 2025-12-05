@@ -73,14 +73,11 @@ public class CheckoutController {
         if (carrito == null || carrito.isEmpty()) {
             return "redirect:/carrito";
         }
-        
-        // Calcular totales iniciales (sin envío)
+
         BigDecimal subtotal = calcularSubtotal(carrito);
         BigDecimal impuestos = subtotal.multiply(TASA_IMPUESTOS)
                 .setScale(2, RoundingMode.HALF_UP);
         BigDecimal total = subtotal.add(impuestos);
-        
-        // Conversión de moneda con tasa fija 3.80
         BigDecimal tasaCambio = TASA_CAMBIO_FIJA;
         BigDecimal totalEnMoneda = total;
         
@@ -88,7 +85,6 @@ public class CheckoutController {
             totalEnMoneda = total.divide(tasaCambio, 2, RoundingMode.HALF_UP);
         }
         
-        // Agregar al modelo
         model.addAttribute("carrito", carrito);
         model.addAttribute("subtotal", subtotal);
         model.addAttribute("impuestos", impuestos);
@@ -119,26 +115,22 @@ public class CheckoutController {
             System.out.println("=".repeat(50));
             System.out.println("Carrito tamaño: " + carrito.size());
             
-            // 1. VALIDACIONES
-            // Obtener tipo de entrega para validar
             TipoEntrega tipoEntrega = tipoEntregaRepository.findById(idTipoEntrega)
                     .orElseThrow(() -> new RuntimeException("Tipo de entrega no válido"));
             
             if ("delivery".equals(tipoEntrega.getNombre().toLowerCase())) {
                 if (direccion == null || direccion.trim().isEmpty() ||
                     distrito == null || distrito.trim().isEmpty()) {
-                    System.out.println("❌ Error: Dirección incompleta para delivery");
+                    System.out.println("Error: Dirección incompleta para delivery");
                     redirectAttributes.addFlashAttribute("error", 
                         "Por favor completa la dirección para delivery");
                     return "redirect:/checkout";
                 }
             }
-            
-            // Obtener método de pago
+
             MetodoPago metodoPago = metodoPagoRepository.findById(idMetodoPago)
                     .orElseThrow(() -> new RuntimeException("Método de pago no válido"));
             
-            // 2. CALCULAR TOTALES
             BigDecimal subtotal = calcularSubtotal(carrito);
             BigDecimal envio = tipoEntrega.getCosto() != null ? tipoEntrega.getCosto() : BigDecimal.ZERO;
             BigDecimal impuestos = subtotal.multiply(TASA_IMPUESTOS)
@@ -154,24 +146,23 @@ public class CheckoutController {
             System.out.println("TOTAL FINAL: S/ " + total);
             System.out.println("Moneda: " + moneda);
             
-            // 3. OBTENER USUARIO Y CLIENTE ACTUAL
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String username = auth.getName();
             System.out.println("\n👤 Usuario autenticado: " + username);
             
             Usuario usuario = usuarioRepository.findByCorreo(username)
                     .orElseThrow(() -> {
-                        System.err.println("❌ Usuario no encontrado: " + username);
+                        System.err.println("Usuario no encontrado: " + username);
                         return new RuntimeException("Usuario no encontrado: " + username);
                     });
-            System.out.println("✅ Usuario encontrado - ID: " + usuario.getIdUsuario() + 
+            System.out.println("Usuario encontrado - ID: " + usuario.getIdUsuario() + 
                             ", Nombre: " + usuario.getNombre());
             
-            // Buscar cliente asociado al usuario
+
             Optional<Cliente> clienteOpt = clienteRepository.findByIdUsuario(usuario.getIdUsuario());
             if (clienteOpt.isEmpty()) {
-                System.out.println("⚠️ Cliente no encontrado, creando nuevo...");
-                // Crear cliente si no existe
+                System.out.println("Cliente no encontrado, creando nuevo...");
+
                 Cliente nuevoCliente = new Cliente();
                 nuevoCliente.setIdUsuario(usuario.getIdUsuario());
                 nuevoCliente.setNombreCliente(usuario.getNombre());
@@ -180,14 +171,13 @@ public class CheckoutController {
                 nuevoCliente.setTelefono("999999999");
                 nuevoCliente = clienteRepository.save(nuevoCliente);
                 clienteOpt = Optional.of(nuevoCliente);
-                System.out.println("✅ Nuevo cliente creado - ID: " + nuevoCliente.getIdCliente());
+                System.out.println("Nuevo cliente creado - ID: " + nuevoCliente.getIdCliente());
             }
             
             Cliente cliente = clienteOpt.get();
-            System.out.println("✅ Cliente asociado - ID: " + cliente.getIdCliente() +
+            System.out.println("Cliente asociado - ID: " + cliente.getIdCliente() +
                             ", Nombre: " + cliente.getNombreCliente());
             
-            // 4. CREAR VENTA EN LA BASE DE DATOS
             Venta venta = new Venta();
             venta.setCliente(cliente);
             venta.setMetodoPago(metodoPago);
@@ -204,23 +194,20 @@ public class CheckoutController {
             System.out.println("- Tipo entrega: " + tipoEntrega.getNombre());
             System.out.println("- Total: S/ " + total);
             
-            // Verificar estado antes de guardar
             long ventasAntes = ventaRepository.count();
             System.out.println("Ventas en BD antes: " + ventasAntes);
             
             venta = ventaRepository.save(venta);
-            System.out.println("✅ Venta guardada exitosamente!");
-            System.out.println("✅ Venta ID generado: " + venta.getIdVenta());
-            
-            // Verificar después de guardar
+            System.out.println("Venta guardada exitosamente!");
+            System.out.println("Venta ID generado: " + venta.getIdVenta());
+
             long ventasDespues = ventaRepository.count();
             System.out.println("Ventas en BD después: " + ventasDespues);
             System.out.println("Diferencia: " + (ventasDespues - ventasAntes));
             
             String numeroPedido = "PED-" + venta.getIdVenta();
-            System.out.println("✅ Número de pedido generado: " + numeroPedido);
-            
-            // 5. CREAR DETALLES DE VENTA Y ACTUALIZAR STOCK
+            System.out.println("Número de pedido generado: " + numeroPedido);
+
             List<DetalleVenta> detalles = new ArrayList<>();
             System.out.println("\n" + "-".repeat(40));
             System.out.println("PROCESANDO " + carrito.size() + " ITEMS DEL CARRITO");
@@ -229,28 +216,27 @@ public class CheckoutController {
             for (int i = 0; i < carrito.size(); i++) {
                 ItemCarrito item = carrito.get(i);
                 System.out.println("\n--- ÍTEM " + (i + 1) + " DE " + carrito.size() + " ---");
-                System.out.println("📕 Libro ID: " + item.getIdLibro());
-                System.out.println("📖 Título: " + item.getTitulo());
-                System.out.println("📦 Cantidad: " + item.getCantidad());
-                System.out.println("💰 Precio unitario: S/ " + item.getPrecio());
-                System.out.println("🧮 Subtotal: S/ " + item.getSubtotal());
-                
-                // Buscar libro en base de datos
+                System.out.println("Libro ID: " + item.getIdLibro());
+                System.out.println("Título: " + item.getTitulo());
+                System.out.println("Cantidad: " + item.getCantidad());
+                System.out.println("Precio unitario: S/ " + item.getPrecio());
+                System.out.println("Subtotal: S/ " + item.getSubtotal());
+
                 Optional<Libro> libroOpt = libroRepository.findById(item.getIdLibro());
                 if (libroOpt.isEmpty()) {
-                    System.err.println("❌ ERROR: Libro no encontrado con ID: " + item.getIdLibro());
+                    System.err.println("ERROR: Libro no encontrado con ID: " + item.getIdLibro());
                     throw new RuntimeException("Libro no encontrado: " + item.getTitulo());
                 }
                 
                 Libro libro = libroOpt.get();
-                System.out.println("✅ Libro encontrado en BD:");
+                System.out.println("Libro encontrado en BD:");
                 System.out.println("   - Título BD: " + libro.getTitulo());
                 System.out.println("   - Stock actual: " + libro.getStock());
                 System.out.println("   - Precio BD: S/ " + libro.getPrecio());
                 
-                // Verificar stock
+
                 if (libro.getStock() < item.getCantidad()) {
-                    System.err.println("❌ ERROR: Stock insuficiente!");
+                    System.err.println("ERROR: Stock insuficiente!");
                     System.err.println("   - Stock disponible: " + libro.getStock());
                     System.err.println("   - Cantidad solicitada: " + item.getCantidad());
                     throw new RuntimeException("Stock insuficiente para: " + libro.getTitulo() + 
@@ -258,7 +244,6 @@ public class CheckoutController {
                                             ", solicitado: " + item.getCantidad());
                 }
                 
-                // Crear detalle
                 DetalleVenta detalle = new DetalleVenta();
                 detalle.setVenta(venta);
                 detalle.setLibro(libro);
@@ -267,25 +252,24 @@ public class CheckoutController {
                 detalle.setSubtotal(item.getSubtotal());
                 
                 detalles.add(detalle);
-                System.out.println("✅ Detalle creado:");
+                System.out.println("Detalle creado:");
                 System.out.println("   - Cantidad: " + item.getCantidad());
                 System.out.println("   - Precio: S/ " + item.getPrecio());
                 System.out.println("   - Subtotal: S/ " + item.getSubtotal());
                 
-                // ACTUALIZAR STOCK del libro
+
                 int stockAnterior = libro.getStock();
                 int nuevoStock = stockAnterior - item.getCantidad();
-                System.out.println("🔄 Actualizando stock:");
+                System.out.println("Actualizando stock:");
                 System.out.println("   - Stock anterior: " + stockAnterior);
                 System.out.println("   - Nuevo stock: " + nuevoStock);
                 
                 libro.setStock(nuevoStock);
                 Libro libroActualizado = libroRepository.save(libro);
-                System.out.println("✅ Stock actualizado exitosamente!");
-                System.out.println("✅ Stock verificado: " + libroActualizado.getStock());
+                System.out.println("Stock actualizado exitosamente!");
+                System.out.println("Stock verificado: " + libroActualizado.getStock());
             }
             
-            // Guardar todos los detalles
             System.out.println("\n" + "-".repeat(30));
             System.out.println("GUARDANDO " + detalles.size() + " DETALLES EN BD");
             System.out.println("-".repeat(30));
@@ -297,27 +281,25 @@ public class CheckoutController {
             
             long detallesDespues = detalleVentaRepository.count();
             System.out.println("Detalles en BD después: " + detallesDespues);
-            System.out.println("✅ Detalles guardados exitosamente!");
-            System.out.println("✅ Diferencia: " + (detallesDespues - detallesAntes) + " detalles añadidos");
+            System.out.println("Detalles guardados exitosamente!");
+            System.out.println("Diferencia: " + (detallesDespues - detallesAntes) + " detalles añadidos");
             
-            // 6. VERIFICACIÓN COMPLETA DE DATOS GUARDADOS
             System.out.println("\n" + "=".repeat(50));
             System.out.println("VERIFICACIÓN COMPLETA DE DATOS GUARDADOS");
             System.out.println("=".repeat(50));
-            System.out.println("📋 Venta ID: " + venta.getIdVenta());
-            System.out.println("📦 Número de pedido: " + numeroPedido);
-            System.out.println("💰 Total de la venta: S/ " + total);
-            System.out.println("📅 Fecha de venta: " + venta.getFechaVenta());
-            System.out.println("💳 Método de pago: " + venta.getMetodoPago().getNombre());
-            System.out.println("🚚 Tipo de entrega: " + venta.getTipoEntrega().getNombre());
+            System.out.println("Venta ID: " + venta.getIdVenta());
+            System.out.println("Número de pedido: " + numeroPedido);
+            System.out.println("Total de la venta: S/ " + total);
+            System.out.println("Fecha de venta: " + venta.getFechaVenta());
+            System.out.println("Método de pago: " + venta.getMetodoPago().getNombre());
+            System.out.println("Tipo de entrega: " + venta.getTipoEntrega().getNombre());
             
-            // Verificar detalles guardados
             System.out.println("\n" + "-".repeat(30));
             System.out.println("DETALLES DE LA VENTA");
             System.out.println("-".repeat(30));
             for (int i = 0; i < detalles.size(); i++) {
                 DetalleVenta detalle = detalles.get(i);
-                System.out.println("📄 Detalle " + (i + 1) + ":");
+                System.out.println("Detalle " + (i + 1) + ":");
                 System.out.println("   - Libro: " + detalle.getLibro().getTitulo());
                 System.out.println("   - Cantidad: " + detalle.getCantidad());
                 System.out.println("   - Precio unitario: S/ " + detalle.getPrecioUnitario());
@@ -325,7 +307,6 @@ public class CheckoutController {
                 System.out.println("   - Stock restante: " + detalle.getLibro().getStock());
             }
             
-            // 7. GUARDAR DATOS DE LA COMPRA PARA LA SESIÓN
             datosCompra.setTipoEntrega(tipoEntrega.getNombre());
             datosCompra.setMetodoPago(metodoPago.getNombre());
             datosCompra.setDireccion(direccion);
@@ -340,35 +321,33 @@ public class CheckoutController {
             datosCompra.setNumeroPedido(numeroPedido);
             datosCompra.setFecha(LocalDateTime.now());
             
-            // 8. LIMPIAR CARRITO DESPUÉS DE LA COMPRA
             System.out.println("\n" + "-".repeat(30));
             System.out.println("LIMPIANDO CARRITO");
             System.out.println("-".repeat(30));
             int itemsEliminados = carrito.size();
             carrito.clear();
-            System.out.println("✅ Carrito limpiado exitosamente!");
-            System.out.println("✅ " + itemsEliminados + " items eliminados del carrito.");
+            System.out.println("Carrito limpiado exitosamente!");
+            System.out.println("" + itemsEliminados + " items eliminados del carrito.");
             
-            // 9. PREPARAR DATOS PARA REDIRECCIÓN
             redirectAttributes.addFlashAttribute("pagoAprobado", true);
             redirectAttributes.addFlashAttribute("numeroPedido", numeroPedido);
             redirectAttributes.addFlashAttribute("mensajeExito", 
                 "¡Pago procesado exitosamente! El stock ha sido actualizado y la venta registrada.");
             
             System.out.println("\n" + "=".repeat(50));
-            System.out.println("✅ PROCESO DE PAGO COMPLETADO EXITOSAMENTE");
+            System.out.println("PROCESO DE PAGO COMPLETADO EXITOSAMENTE");
             System.out.println("=".repeat(50));
-            System.out.println("🔄 Redirigiendo a confirmación...");
+            System.out.println("Redirigiendo a confirmación...");
             
             return "redirect:/checkout/confirmacion";
             
         } catch (Exception e) {
             System.err.println("\n" + "=".repeat(50));
-            System.err.println("❌ ERROR EN PROCESO DE PAGO");
+            System.err.println("ERROR EN PROCESO DE PAGO");
             System.err.println("=".repeat(50));
-            System.err.println("⚠️ Error tipo: " + e.getClass().getName());
-            System.err.println("⚠️ Mensaje: " + e.getMessage());
-            System.err.println("⚠️ Causa: " + (e.getCause() != null ? e.getCause().getMessage() : "Ninguna"));
+            System.err.println("Error tipo: " + e.getClass().getName());
+            System.err.println("Mensaje: " + e.getMessage());
+            System.err.println("Causa: " + (e.getCause() != null ? e.getCause().getMessage() : "Ninguna"));
             System.err.println("Stack trace:");
             e.printStackTrace();
             
@@ -408,24 +387,21 @@ public class CheckoutController {
     @ResponseBody
     public String verificarDatos() {
         StringBuilder resultado = new StringBuilder();
-        resultado.append("<pre>"); // Para formato HTML
+        resultado.append("<pre>"); 
         resultado.append("=== VERIFICACIÓN DE DATOS EN TIEMPO REAL ===\n\n");
         
         try {
-            // Verificar ventas
             long totalVentas = ventaRepository.count();
-            resultado.append("✅ Total ventas en BD: ").append(totalVentas).append("\n");
+            resultado.append("Total ventas en BD: ").append(totalVentas).append("\n");
             
             BigDecimal totalIngresos = ventaRepository.sumTotalVentas();
-            resultado.append("✅ Total ingresos en BD: S/ ")
+            resultado.append("Total ingresos en BD: S/ ")
                     .append(totalIngresos != null ? totalIngresos.setScale(2, RoundingMode.HALF_UP) : "0.00")
                     .append("\n");
             
-            // Verificar detalles
             Long totalDetalles = detalleVentaRepository.sumTotalLibrosVendidos();
-            resultado.append("✅ Total libros vendidos en BD: ").append(totalDetalles != null ? totalDetalles : 0).append("\n");
+            resultado.append("Total libros vendidos en BD: ").append(totalDetalles != null ? totalDetalles : 0).append("\n");
             
-            // Verificar últimas 5 ventas
             resultado.append("\n=== ÚLTIMAS 5 VENTAS ===\n");
             try {
                 List<Venta> todasVentas = ventaRepository.findAll();
@@ -438,7 +414,7 @@ public class CheckoutController {
                     resultado.append("No hay ventas registradas\n");
                 } else {
                     for (Venta v : ultimasVentas) {
-                        resultado.append("📋 ID: ").append(v.getIdVenta())
+                        resultado.append("ID: ").append(v.getIdVenta())
                                 .append(" | Total: S/ ").append(v.getTotal())
                                 .append(" | Fecha: ").append(v.getFechaVenta())
                                 .append(" | Método: ").append(v.getMetodoPago() != null ? v.getMetodoPago().getNombre() : "N/A")
@@ -448,10 +424,9 @@ public class CheckoutController {
                     }
                 }
             } catch (Exception e) {
-                resultado.append("⚠️ Error obteniendo ventas: ").append(e.getMessage()).append("\n");
+                resultado.append("Error obteniendo ventas: ").append(e.getMessage()).append("\n");
             }
             
-            // Verificar stock de algunos libros
             resultado.append("\n=== STOCK DE LIBROS (primeros 10) ===\n");
             try {
                 List<Libro> libros = libroRepository.findAll();
@@ -459,7 +434,7 @@ public class CheckoutController {
                     libros.subList(0, 10) : libros;
                 
                 for (Libro libro : primerosLibros) {
-                    resultado.append("📚 ID: ").append(libro.getIdLibro())
+                    resultado.append("ID: ").append(libro.getIdLibro())
                             .append(" | Título: ").append(libro.getTitulo().length() > 20 ? 
                                 libro.getTitulo().substring(0, 20) + "..." : libro.getTitulo())
                             .append(" | Stock: ").append(libro.getStock())
@@ -467,10 +442,9 @@ public class CheckoutController {
                             .append("\n");
                 }
             } catch (Exception e) {
-                resultado.append("⚠️ Error obteniendo libros: ").append(e.getMessage()).append("\n");
+                resultado.append("Error obteniendo libros: ").append(e.getMessage()).append("\n");
             }
             
-            // Verificar estadísticas de ventas por mes
             resultado.append("\n=== ESTADÍSTICAS POR MES ===\n");
             try {
                 List<Object[]> ventasPorMes = ventaRepository.findVentasPorMes();
@@ -478,15 +452,14 @@ public class CheckoutController {
                     resultado.append("No hay datos de ventas por mes\n");
                 } else {
                     for (Object[] obj : ventasPorMes) {
-                        resultado.append("📅 Mes ").append(obj[0])
+                        resultado.append("Mes ").append(obj[0])
                                 .append(": ").append(obj[1]).append(" ventas\n");
                     }
                 }
             } catch (Exception e) {
-                resultado.append("⚠️ Error obteniendo ventas por mes: ").append(e.getMessage()).append("\n");
+                resultado.append("Error obteniendo ventas por mes: ").append(e.getMessage()).append("\n");
             }
             
-            // Verificar libros más vendidos
             resultado.append("\n=== LIBROS MÁS VENDIDOS ===\n");
             try {
                 List<Object[]> librosMasVendidos = detalleVentaRepository.findLibrosMasVendidos();
@@ -495,16 +468,16 @@ public class CheckoutController {
                 } else {
                     for (int i = 0; i < Math.min(5, librosMasVendidos.size()); i++) {
                         Object[] obj = librosMasVendidos.get(i);
-                        resultado.append("🏆 ").append(obj[0] != null ? ((String) obj[0]).substring(0, Math.min(30, ((String) obj[0]).length())) : "Sin título")
+                        resultado.append(" ").append(obj[0] != null ? ((String) obj[0]).substring(0, Math.min(30, ((String) obj[0]).length())) : "Sin título")
                                 .append(": ").append(obj[1]).append(" unidades\n");
                     }
                 }
             } catch (Exception e) {
-                resultado.append("⚠️ Error obteniendo libros más vendidos: ").append(e.getMessage()).append("\n");
+                resultado.append("Error obteniendo libros más vendidos: ").append(e.getMessage()).append("\n");
             }
             
         } catch (Exception e) {
-            resultado.append("❌ ERROR GENERAL: ").append(e.getMessage()).append("\n");
+            resultado.append("ERROR GENERAL: ").append(e.getMessage()).append("\n");
         }
         
         resultado.append("</pre>");
@@ -523,18 +496,15 @@ public class CheckoutController {
         sb.append(".warning { color: orange; }");
         sb.append("pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }");
         sb.append("</style></head><body>");
-        sb.append("<h2>📊 Estado del Sistema de Ventas</h2>");
+        sb.append("<h2>Estado del Sistema de Ventas</h2>");
         
         try {
-            // 1. Verificar conexión y contadores
             long totalVentas = ventaRepository.count();
-            sb.append("<p class='success'>✅ Conexión a BD establecida</p>");
-            sb.append("<p>📈 Total de ventas: <strong>").append(totalVentas).append("</strong></p>");
+            sb.append("<p class='success'>Conexión a BD establecida</p>");
+            sb.append("<p>Total de ventas: <strong>").append(totalVentas).append("</strong></p>");
             
-            // 2. Verificar última venta
             List<Venta> ventas = ventaRepository.findAll();
             if (!ventas.isEmpty()) {
-                // Encontrar venta más reciente
                 Venta ultimaVenta = ventas.get(0);
                 for (Venta v : ventas) {
                     if (v.getIdVenta() > ultimaVenta.getIdVenta()) {
@@ -542,7 +512,7 @@ public class CheckoutController {
                     }
                 }
                 
-                sb.append("<p>🆕 Última venta registrada:</p>");
+                sb.append("<p>Última venta registrada:</p>");
                 sb.append("<pre>");
                 sb.append("ID: ").append(ultimaVenta.getIdVenta()).append("\n");
                 sb.append("Total: S/ ").append(ultimaVenta.getTotal()).append("\n");
@@ -551,23 +521,21 @@ public class CheckoutController {
                 sb.append("Cliente ID: ").append(ultimaVenta.getCliente() != null ? ultimaVenta.getCliente().getIdCliente() : "N/A").append("\n");
                 sb.append("</pre>");
             } else {
-                sb.append("<p class='warning'>⚠️ No hay ventas registradas</p>");
+                sb.append("<p class='warning'>No hay ventas registradas</p>");
             }
             
-            // 3. Verificar estadísticas
             BigDecimal ingresosTotales = ventaRepository.sumTotalVentas();
             Long librosVendidos = detalleVentaRepository.sumTotalLibrosVendidos();
             
-            sb.append("<p>💰 Ingresos totales: <strong>S/ ")
+            sb.append("<p>Ingresos totales: <strong>S/ ")
             .append(ingresosTotales != null ? ingresosTotales.setScale(2) : "0.00")
             .append("</strong></p>");
             
-            sb.append("<p>📚 Libros vendidos: <strong>")
+            sb.append("<p>Libros vendidos: <strong>")
             .append(librosVendidos != null ? librosVendidos : 0)
             .append("</strong></p>");
             
-            // 4. Verificar algunos libros
-            sb.append("<p>📦 Muestra de stock de libros:</p>");
+            sb.append("<p> Muestra de stock de libros:</p>");
             sb.append("<pre>");
             List<Libro> libros = libroRepository.findAll();
             int count = 0;
@@ -580,17 +548,16 @@ public class CheckoutController {
             }
             sb.append("</pre>");
             
-            sb.append("<p class='success'>✅ Sistema funcionando correctamente</p>");
+            sb.append("<p class='success'>Sistema funcionando correctamente</p>");
             
         } catch (Exception e) {
-            sb.append("<p class='error'>❌ Error: ").append(e.getMessage()).append("</p>");
+            sb.append("<p class='error'>Error: ").append(e.getMessage()).append("</p>");
         }
         
         sb.append("</body></html>");
         return sb.toString();
     }
     
-    // Clase DTO para datos de la compra - MOVIDA AQUÍ
     public static class DatosCompra {
         private String tipoEntrega;
         private String metodoPago;
