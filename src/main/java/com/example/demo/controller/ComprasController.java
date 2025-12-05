@@ -3,12 +3,8 @@ package com.example.demo.controller;
 import com.example.demo.model.ItemCarrito;
 import com.example.demo.repository.VentaRepository;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.SessionAttributes;
-
-import jakarta.servlet.http.HttpSession; // CAMBIADO: de javax.servlet a jakarta.servlet
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.ArrayList;
